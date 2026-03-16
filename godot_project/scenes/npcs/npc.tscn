@@ -1,0 +1,47 @@
+[gd_scene load_steps=3 format=3 uid="uid://npc001"]
+
+[ext_resource type="Script" path="res://scripts/npcs/npc.gd" id="1_npc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(16, 16)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_detect"]
+radius = 48.0
+
+[node name="NPC" type="CharacterBody2D" groups=["npcs"]]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("1_npc")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.3, 0.8, 1, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Nametag" type="Label" parent="."]
+offset_left = -30
+offset_top = -24
+offset_right = 30
+offset_bottom = -10
+horizontal_alignment = 1
+text = "Villager"
+
+[node name="InteractHint" type="Label" parent="."]
+offset_left = -30
+offset_top = 12
+offset_right = 30
+offset_bottom = 26
+horizontal_alignment = 1
+text = "[E] Talk"
+visible = false
+
+[node name="DetectionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="DetectionShape" type="CollisionShape2D" parent="DetectionArea"]
+shape = SubResource("CircleShape2D_detect")
+
+[connection signal="body_entered" from="DetectionArea" to="." method="_on_detection_area_body_entered"]
+[connection signal="body_exited" from="DetectionArea" to="." method="_on_detection_area_body_exited"]
