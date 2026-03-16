@@ -4,6 +4,16 @@ All notable changes to the Pixel Grinder MMORPG project.
 
 ---
 
+## [0.5.1] - 2026-03-16
+
+### Changed — Roadmap & Planning
+- Rewrote PLAN.md as a full 8-phase gameplay-focused roadmap
+- Added multi-currency economy design: Diamond (premium), Gold (challenge), Silver (grinding), Legion Marks (guild)
+- Organized completed work (v0.1–v0.5) into version history
+- Phases: Currency System, Combat & Gameplay Loop, Map & World, Crafting & Sinks, Party & Social, Boss & Dungeons, Polish & Live Ops
+
+---
+
 ## [0.5.0] - 2026-03-16
 
 ### Added — Save System & Multiple Characters
