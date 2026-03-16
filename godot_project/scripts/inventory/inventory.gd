@@ -99,9 +99,10 @@ func _use_consumable(item: Dictionary) -> void:
 			)
 	EventBus.item_used.emit(item)
 
-func _equip_item(_item: Dictionary, _slot_index: int) -> void:
-	# Equipment system can be expanded
-	pass
+func _equip_item(item: Dictionary, slot_index: int) -> void:
+	# Emit event so the UI layer can show the comparison panel
+	EventBus.item_picked_up.emit(item) # Re-emit as equipment pickup for comparison
+	remove_item(slot_index)
 
 func get_item(slot_index: int) -> Dictionary:
 	if slot_index < 0 or slot_index >= MAX_SLOTS:
@@ -110,3 +111,14 @@ func get_item(slot_index: int) -> Dictionary:
 
 func get_all_items() -> Array[Dictionary]:
 	return items
+
+## Count how many of a specific item (by id) the player has
+func count_item(item_id: String) -> int:
+	for item in items:
+		if item.get("id", "") == item_id:
+			return item.get("quantity", 0)
+	return 0
+
+## Check if player has at least `amount` of an item
+func has_item(item_id: String, amount: int = 1) -> bool:
+	return count_item(item_id) >= amount

@@ -55,6 +55,8 @@ signal silver_pickup(position: Vector2, amount: int)
 
 # Enhancement events
 signal enhancement_result(slot: String, level: int, success: bool)
+signal enhancement_downgraded(slot: String, old_level: int, new_level: int)
+signal enhancement_visual_feedback(slot: String, success: bool, new_level: int)
 
 # Skill tree events
 signal skill_points_changed(available: int, total: int)

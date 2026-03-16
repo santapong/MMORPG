@@ -18,6 +18,7 @@ var other_players: Dictionary = {} # peer_id -> OtherPlayer node
 var skill_bar_node: PanelContainer = null
 var grind_tracker_node: PanelContainer = null
 var enhancement_panel_node: PanelContainer = null
+var comparison_panel_node: PanelContainer = null
 var zone_indicator_node: PanelContainer = null
 var damage_numbers_node: Node2D = null
 var minimap_node: PanelContainer = null
@@ -210,7 +211,19 @@ func _setup_grinding_ui() -> void:
 	enhancement_panel_node.set_script(EnhancementScript)
 	ui_layer.add_child(enhancement_panel_node)
 	if local_player and local_player.get_equipment_system():
+		# Connect equipment system to inventory for material tracking
+		var inv_panel := _find_inventory_panel()
+		if inv_panel and inv_panel.inventory:
+			local_player.get_equipment_system().setup_inventory(inv_panel.inventory)
 		enhancement_panel_node.setup(local_player.get_equipment_system())
+
+	# Equipment comparison panel
+	var ComparisonScript := preload("res://scripts/ui/equipment_comparison_panel.gd")
+	comparison_panel_node = PanelContainer.new()
+	comparison_panel_node.set_script(ComparisonScript)
+	ui_layer.add_child(comparison_panel_node)
+	if local_player and local_player.get_equipment_system():
+		comparison_panel_node.setup(local_player.get_equipment_system())
 
 	# Zone indicator
 	var ZoneIndicatorScript := preload("res://scripts/ui/zone_indicator.gd")
@@ -260,3 +273,12 @@ func _on_player_left(peer_id: int) -> void:
 	if peer_id in other_players:
 		other_players[peer_id].queue_free()
 		other_players.erase(peer_id)
+
+func _find_inventory_panel() -> InventoryPanel:
+	for child in ui_layer.get_children():
+		if child is InventoryPanel:
+			return child
+	return null
+
+func get_comparison_panel() -> PanelContainer:
+	return comparison_panel_node

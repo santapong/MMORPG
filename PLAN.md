@@ -8,49 +8,49 @@ Flesh out the enhancement experience so it feels rewarding and strategic — not
 ### Enhancement System Improvements
 
 #### 1. Enhancement Visual Feedback
-- [ ] Glow/particle effect on enhanced items (+5 green, +10 blue, +15 purple, +20 orange)
-- [ ] Screen shake and flash on success/failure
-- [ ] Enhancement level shown on equipment sprite (aura overlay)
-- [ ] Sound cues: distinct sounds for attempt, success, failure, and downgrade
+- [x] Glow/particle effect on enhanced items (+5 green, +10 blue, +15 purple, +20 orange)
+- [x] Screen shake and flash on success/failure
+- [x] Enhancement level shown on equipment sprite (aura overlay)
+- [x] Sound cues: distinct sounds for attempt, success, failure, and downgrade
 
 #### 2. Enhancement Material Requirements
-- [ ] Black Stone (Weapon) required for weapon enhancement
-- [ ] Black Stone (Armor) required for body/helmet/gloves/boots
-- [ ] Concentrated Black Stone for +16 and above (rare drop only)
-- [ ] Material cost scales with enhancement level (1 stone for +1–10, 2 for +11–15, 3 for +16–20)
-- [ ] Integrate with existing drop tables (stones already drop from mobs)
+- [x] Black Stone (Weapon) required for weapon enhancement
+- [x] Black Stone (Armor) required for body/helmet/gloves/boots
+- [x] Concentrated Black Stone for +16 and above (rare drop only)
+- [x] Material cost scales with enhancement level (1 stone for +1–10, 2 for +11–15, 3 for +16–20)
+- [x] Integrate with existing drop tables (stones already drop from mobs)
 
 #### 3. Cron Stones — Downgrade Protection
-- [ ] Add Cron Stones as a new material (purchasable with silver or rare drop)
-- [ ] Spending Cron Stones prevents enhancement level downgrade on failure (+16 and above)
-- [ ] Cron Stone cost scales with current enhance level and gear grade
-- [ ] UI toggle: "Use Cron Stones" checkbox in enhancement panel
+- [x] Add Cron Stones as a new material (purchasable with silver or rare drop)
+- [x] Spending Cron Stones prevents enhancement level downgrade on failure (+16 and above)
+- [x] Cron Stone cost scales with current enhance level and gear grade
+- [x] UI toggle: "Use Cron Stones" checkbox in enhancement panel
 
 #### 4. Forced Enhancement (+16 to +20)
-- [ ] At +15, enhancement name changes: PRI (+16), DUO (+17), TRI (+18), TET (+19), PEN (+20)
-- [ ] Failed PRI–PEN drops enhancement by 1 level (unless Cron protected)
-- [ ] Failstacks become critical strategy at this tier
-- [ ] Add "Advice of Valks" item to set failstacks to a fixed value
+- [x] At +15, enhancement name changes: PRI (+16), DUO (+17), TRI (+18), TET (+19), PEN (+20)
+- [x] Failed PRI–PEN drops enhancement by 1 level (unless Cron protected)
+- [x] Failstacks become critical strategy at this tier
+- [x] Add "Advice of Valks" item to set failstacks to a fixed value
 
 #### 5. Enhancement UI Overhaul
-- [ ] Show item stats before/after enhancement preview
-- [ ] Display grade color and grade name in enhancement panel
-- [ ] History log: last 10 enhancement attempts (success/fail/level)
-- [ ] Failstack recommendation guide (optimal failstack ranges per level)
-- [ ] Material inventory count shown inline
+- [x] Show item stats before/after enhancement preview
+- [x] Display grade color and grade name in enhancement panel
+- [x] History log: last 10 enhancement attempts (success/fail/level)
+- [x] Failstack recommendation guide (optimal failstack ranges per level)
+- [x] Material inventory count shown inline
 
 #### 6. Weapon vs Armor Differentiation
-- [ ] Weapons gain primarily attack + crit per enhance level
-- [ ] Body/Helmet gain primarily defense + max_hp per enhance level
-- [ ] Gloves gain attack + crit_chance per enhance level
-- [ ] Boots gain defense + speed per enhance level
-- [ ] Rings/Necklaces gain mixed stats per enhance level
-- [ ] Grade multiplier affects enhancement gains (Legendary gets bigger bonuses)
+- [x] Weapons gain primarily attack + crit per enhance level
+- [x] Body/Helmet gain primarily defense + max_hp per enhance level
+- [x] Gloves gain attack + crit_chance per enhance level
+- [x] Boots gain defense + speed per enhance level
+- [x] Rings/Necklaces gain mixed stats per enhance level
+- [x] Grade multiplier affects enhancement gains (Legendary gets bigger bonuses)
 
 #### 7. Equipment Comparison
-- [ ] Side-by-side comparison when equipping new gear
-- [ ] Green/red stat delta indicators ("+5 ATK", "-3 DEF")
-- [ ] "Would you like to equip?" confirmation with stat preview
+- [x] Side-by-side comparison when equipping new gear
+- [x] Green/red stat delta indicators ("+5 ATK", "-3 DEF")
+- [x] "Would you like to equip?" confirmation with stat preview
 
 ---
 
