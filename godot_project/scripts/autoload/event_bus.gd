@@ -10,9 +10,16 @@ signal player_health_changed(player_id: int, current_hp: int, max_hp: int)
 signal player_mana_changed(player_id: int, current_mp: int, max_mp: int)
 signal player_exp_changed(player_id: int, current_exp: int, exp_to_level: int)
 
+# Class events
+signal class_selected(class_type: ClassData.ClassType)
+
 # Combat events
 signal damage_dealt(attacker_id: int, target_id: int, amount: int)
 signal entity_died(entity_id: int)
+signal critical_hit(position: Vector2, amount: int)
+
+# Skill events
+signal skill_activated(skill_id: String, position: Vector2)
 
 # Chat events
 signal chat_message_received(sender_name: String, message: String, channel: String)
@@ -39,3 +46,12 @@ signal player_left(player_id: int)
 # UI events
 signal ui_toggle_inventory()
 signal ui_show_dialog(npc_name: String, dialog_text: String, options: Array)
+
+# Zone events
+signal zone_changed(zone_id: String, zone_name: String)
+
+# Economy events
+signal silver_pickup(position: Vector2, amount: int)
+
+# Enhancement events
+signal enhancement_result(slot: String, level: int, success: bool)

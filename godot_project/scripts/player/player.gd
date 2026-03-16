@@ -1,6 +1,6 @@
 extends CharacterBody2D
 class_name Player
-## Main player controller — handles movement, animation direction, and camera.
+## Main player controller — handles movement, skills, and combat. BDO-style grinding.
 
 @export var speed: float = 150.0
 
@@ -15,12 +15,43 @@ var is_local: bool = false
 var player_peer_id: int = -1
 var facing_direction: Vector2 = Vector2.DOWN
 
+# Skill system
+var skill_system: SkillSystem = null
+
+# Equipment system
+var equipment: EquipmentSystem = null
+
+# Mana regen
+var mana_regen_timer: float = 0.0
+const MANA_REGEN_INTERVAL: float = 2.0
+const MANA_REGEN_AMOUNT: int = 3
+
 func _ready() -> void:
 	if is_local:
 		camera.enabled = true
 		nametag.text = GameManager.player_name
+		speed = GameManager.player_stats["speed"]
+
+		# Initialize skill system
+		skill_system = SkillSystem.new()
+		add_child(skill_system)
+		skill_system.setup(self)
+
+		# Initialize equipment system
+		equipment = EquipmentSystem.new()
+		add_child(equipment)
+
+		# Tint sprite based on class
+		var class_info := ClassData.get_class_info(GameManager.player_class)
+		sprite.modulate = class_info.get("color", Color.WHITE)
 	else:
 		camera.enabled = false
+
+func get_skill_system() -> SkillSystem:
+	return skill_system
+
+func get_equipment_system() -> EquipmentSystem:
+	return equipment
 
 func _physics_process(delta: float) -> void:
 	if not is_local:
@@ -45,13 +76,19 @@ func _physics_process(delta: float) -> void:
 	if multiplayer.has_multiplayer_peer():
 		NetworkManager.sync_player_position.rpc(global_position)
 
-	# Attack input
+	# Attack input (basic attack)
 	if Input.is_action_just_pressed("attack"):
 		_perform_attack()
 
 	# Interact input
 	if Input.is_action_just_pressed("interact"):
 		_try_interact()
+
+	# Mana regen
+	mana_regen_timer += delta
+	if mana_regen_timer >= MANA_REGEN_INTERVAL:
+		mana_regen_timer = 0.0
+		_regen_mana()
 
 func _update_animation(action: String) -> void:
 	var dir_name := _get_direction_name()
@@ -71,11 +108,17 @@ func _perform_attack() -> void:
 		animation_player.play(anim_name)
 
 	# Check for enemies in attack area
+	var total_attack := GameManager.get_total_attack()
 	for body in attack_area.get_overlapping_bodies():
 		if body.is_in_group("enemies"):
-			var damage: int = GameManager.player_stats["attack"]
+			var crit_result := CombatSystem.calculate_crit(
+				total_attack, GameManager.player_stats.get("crit_chance", 0.1)
+			)
+			var damage: int = crit_result["damage"]
 			if body.has_method("take_damage"):
 				body.take_damage(damage, player_peer_id)
+			if crit_result["is_crit"]:
+				EventBus.critical_hit.emit(body.global_position, damage)
 			if multiplayer.has_multiplayer_peer():
 				NetworkManager.sync_damage.rpc(
 					player_peer_id, body.get_instance_id(), damage
@@ -88,13 +131,18 @@ func _try_interact() -> void:
 			return
 
 func take_damage(amount: int, _attacker_id: int) -> void:
-	var actual_damage: int = max(1, amount - GameManager.player_stats["defense"])
+	var total_def := GameManager.get_total_defense()
+	var actual_damage: int = max(1, amount - total_def)
 	GameManager.player_stats["hp"] -= actual_damage
 	EventBus.player_health_changed.emit(
 		player_peer_id,
 		GameManager.player_stats["hp"],
 		GameManager.player_stats["max_hp"]
 	)
+	# Flash red
+	sprite.modulate = Color.RED
+	var class_color: Color = ClassData.get_class_info(GameManager.player_class).get("color", Color.WHITE)
+	get_tree().create_timer(0.15).timeout.connect(func(): sprite.modulate = class_color)
 	if GameManager.player_stats["hp"] <= 0:
 		_die()
 
@@ -105,7 +153,7 @@ func _die() -> void:
 	EventBus.player_respawned.connect(_on_respawned, CONNECT_ONE_SHOT)
 
 func _on_respawned(_player_id: int) -> void:
-	global_position = Vector2(400, 300) # Spawn point
+	global_position = Vector2(300, 300) # Spawn point in starter village
 	visible = true
 	set_physics_process(true)
 	EventBus.player_health_changed.emit(
@@ -113,3 +161,15 @@ func _on_respawned(_player_id: int) -> void:
 		GameManager.player_stats["hp"],
 		GameManager.player_stats["max_hp"]
 	)
+
+func _regen_mana() -> void:
+	if GameManager.player_stats["mp"] < GameManager.player_stats["max_mp"]:
+		GameManager.player_stats["mp"] = min(
+			GameManager.player_stats["mp"] + MANA_REGEN_AMOUNT,
+			GameManager.player_stats["max_mp"]
+		)
+		EventBus.player_mana_changed.emit(
+			player_peer_id,
+			GameManager.player_stats["mp"],
+			GameManager.player_stats["max_mp"]
+		)

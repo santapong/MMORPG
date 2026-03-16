@@ -18,7 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1, 0.1, 0.15, 1)
+color = Color(0.08, 0.06, 0.12, 1)
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -30,16 +30,41 @@ grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
 layout_mode = 2
-custom_minimum_size = Vector2(300, 0)
+custom_minimum_size = Vector2(350, 0)
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 horizontal_alignment = 1
-text = "MMORPG"
+text = "PIXEL GRINDER"
+
+[node name="SubtitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "A BDO-Inspired Grinding Game"
 
 [node name="Spacer1" type="Control" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 20)
+custom_minimum_size = Vector2(0, 15)
+
+[node name="ClassLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Choose Your Class:"
+horizontal_alignment = 1
+
+[node name="ClassContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="ClassDescLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+horizontal_alignment = 1
+autowrap_mode = 2
+text = "Melee bruiser with high HP and defense."
+
+[node name="Spacer2" type="Control" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 10)
 
 [node name="UsernameLabel" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -49,7 +74,7 @@ text = "Username:"
 layout_mode = 2
 placeholder_text = "Enter your name..."
 
-[node name="Spacer2" type="Control" parent="CenterContainer/VBoxContainer"]
+[node name="Spacer3" type="Control" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 10)
 
@@ -61,13 +86,13 @@ text = "Server IP:"
 layout_mode = 2
 placeholder_text = "127.0.0.1"
 
-[node name="Spacer3" type="Control" parent="CenterContainer/VBoxContainer"]
+[node name="Spacer4" type="Control" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 20)
+custom_minimum_size = Vector2(0, 15)
 
 [node name="SingleplayerButton" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Play Singleplayer"
+text = "Start Grinding (Singleplayer)"
 
 [node name="HostButton" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -77,7 +102,7 @@ text = "Host Server"
 layout_mode = 2
 text = "Join Server"
 
-[node name="Spacer4" type="Control" parent="CenterContainer/VBoxContainer"]
+[node name="Spacer5" type="Control" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 10)
 
@@ -85,3 +110,8 @@ custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 horizontal_alignment = 1
 text = ""
+
+[node name="ControlsLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "WASD: Move | Click: Attack | 1-4: Skills | G: Grind Tracker | P: Enhance | I: Inventory"
