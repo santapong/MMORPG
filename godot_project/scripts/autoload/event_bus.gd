@@ -55,3 +55,7 @@ signal silver_pickup(position: Vector2, amount: int)
 
 # Enhancement events
 signal enhancement_result(slot: String, level: int, success: bool)
+
+# Navigation events
+signal waypoint_set(position: Vector2)
+signal waypoint_cleared()

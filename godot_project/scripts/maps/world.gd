@@ -20,6 +20,9 @@ var grind_tracker_node: PanelContainer = null
 var enhancement_panel_node: PanelContainer = null
 var zone_indicator_node: PanelContainer = null
 var damage_numbers_node: Node2D = null
+var minimap_node: PanelContainer = null
+var world_map_node: CanvasLayer = null
+var waypoint_arrow_node: Control = null
 
 func _ready() -> void:
 	_create_zone_backgrounds()
@@ -57,6 +60,10 @@ func _process(_delta: float) -> void:
 	# Toggle enhancement panel with P
 	if Input.is_action_just_pressed("toggle_enhancement") and enhancement_panel_node:
 		enhancement_panel_node.visible = not enhancement_panel_node.visible
+
+	# Toggle world map with M
+	if Input.is_action_just_pressed("toggle_world_map") and world_map_node:
+		world_map_node.visible = not world_map_node.visible
 
 func _create_zone_backgrounds() -> void:
 	## Create colored rectangles for each zone on the ground layer
@@ -216,6 +223,29 @@ func _setup_grinding_ui() -> void:
 	damage_numbers_node = Node2D.new()
 	damage_numbers_node.set_script(DamageNumbersScript)
 	entities.add_child(damage_numbers_node)
+
+	# Minimap
+	var MinimapScript := preload("res://scripts/ui/minimap.gd")
+	minimap_node = PanelContainer.new()
+	minimap_node.set_script(MinimapScript)
+	ui_layer.add_child(minimap_node)
+	minimap_node.setup(local_player)
+
+	# World map overlay
+	var WorldMapScript := preload("res://scripts/ui/world_map.gd")
+	world_map_node = CanvasLayer.new()
+	world_map_node.set_script(WorldMapScript)
+	add_child(world_map_node)
+	world_map_node.setup(local_player)
+
+	# Waypoint navigation arrow
+	var WaypointArrowScript := preload("res://scripts/ui/waypoint_arrow.gd")
+	waypoint_arrow_node = Control.new()
+	waypoint_arrow_node.set_script(WaypointArrowScript)
+	waypoint_arrow_node.anchor_right = 1.0
+	waypoint_arrow_node.anchor_bottom = 1.0
+	ui_layer.add_child(waypoint_arrow_node)
+	waypoint_arrow_node.setup(local_player)
 
 func _on_player_joined(peer_id: int, player_name: String) -> void:
 	if peer_id == GameManager.player_id:
