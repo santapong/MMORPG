@@ -62,7 +62,7 @@ func _physics_process(delta: float) -> void:
 	input_dir.y = Input.get_axis("move_up", "move_down")
 	input_dir = input_dir.normalized()
 
-	velocity = input_dir * speed
+	velocity = input_dir * GameManager.get_total_speed()
 
 	if input_dir != Vector2.ZERO:
 		facing_direction = input_dir
@@ -112,7 +112,7 @@ func _perform_attack() -> void:
 	for body in attack_area.get_overlapping_bodies():
 		if body.is_in_group("enemies"):
 			var crit_result := CombatSystem.calculate_crit(
-				total_attack, GameManager.player_stats.get("crit_chance", 0.1)
+				total_attack, GameManager.get_total_crit_chance(), GameManager.get_total_crit_damage()
 			)
 			var damage: int = crit_result["damage"]
 			if body.has_method("take_damage"):
@@ -131,6 +131,9 @@ func _try_interact() -> void:
 			return
 
 func take_damage(amount: int, _attacker_id: int) -> void:
+	# Dodge check from passive skills
+	if randf() < GameManager.get_dodge_chance():
+		return # Dodged!
 	var total_def := GameManager.get_total_defense()
 	var actual_damage: int = max(1, amount - total_def)
 	GameManager.player_stats["hp"] -= actual_damage
@@ -163,10 +166,12 @@ func _on_respawned(_player_id: int) -> void:
 	)
 
 func _regen_mana() -> void:
-	if GameManager.player_stats["mp"] < GameManager.player_stats["max_mp"]:
+	var total_max_mp := GameManager.get_total_max_mp()
+	if GameManager.player_stats["mp"] < total_max_mp:
+		var regen := MANA_REGEN_AMOUNT + GameManager.get_mana_regen_bonus()
 		GameManager.player_stats["mp"] = min(
-			GameManager.player_stats["mp"] + MANA_REGEN_AMOUNT,
-			GameManager.player_stats["max_mp"]
+			GameManager.player_stats["mp"] + regen,
+			total_max_mp
 		)
 		EventBus.player_mana_changed.emit(
 			player_peer_id,

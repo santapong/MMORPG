@@ -1,6 +1,7 @@
 extends Node
 class_name EquipmentSystem
 ## BDO-inspired equipment and enhancement system (+1 to +20).
+## Now supports grades, level requirements, and expanded stats.
 
 signal equipment_changed(slot: String)
 signal enhancement_success(slot: String, new_level: int)
@@ -17,7 +18,7 @@ const ENHANCEMENT_RATES := {
 	16: 0.05, 17: 0.04, 18: 0.03, 19: 0.02, 20: 0.01,
 }
 
-## Enhancement stat bonus per level
+## Base enhancement stat bonus per level per slot
 const ENHANCE_BONUS_PER_LEVEL := {
 	"weapon": {"attack": 3, "defense": 0},
 	"body": {"attack": 0, "defense": 3},
@@ -47,15 +48,30 @@ func get_equipped(slot: String) -> Dictionary:
 
 func equip_item(item: Dictionary) -> Dictionary:
 	## Equip an item. Returns the previously equipped item (or empty dict).
+	## Now checks level requirements and class restrictions.
 	var slot: String = item.get("slot", "")
 	if slot.is_empty() or slot not in SLOTS:
 		return {}
+
+	# Check level requirement
+	var level_req: int = item.get("level_req", 1)
+	if GameManager.player_stats["level"] < level_req:
+		return {}
+
+	# Check class requirement
+	var class_req: Array = item.get("class_req", [])
+	if class_req.size() > 0 and GameManager.player_class not in class_req:
+		return {}
+
 	var previous := equipped.get(slot, {})
-	equipped[slot] = item.duplicate()
+	equipped[slot] = item.duplicate(true)
 	if not equipped[slot].has("enhance_level"):
 		equipped[slot]["enhance_level"] = 0
+	if not equipped[slot].has("grade"):
+		equipped[slot]["grade"] = EquipmentData.Grade.COMMON
 	_recalculate_stats()
 	equipment_changed.emit(slot)
+	EventBus.equipment_equipped.emit(slot, equipped[slot])
 	return previous
 
 func unequip_item(slot: String) -> Dictionary:
@@ -65,10 +81,12 @@ func unequip_item(slot: String) -> Dictionary:
 	equipped.erase(slot)
 	_recalculate_stats()
 	equipment_changed.emit(slot)
+	EventBus.equipment_unequipped.emit(slot, item)
 	return item
 
 func enhance_item(slot: String) -> bool:
 	## Try to enhance equipped item. BDO-style with failstacks.
+	## Grade affects enhancement bonus multiplier.
 	if not equipped.has(slot):
 		return false
 
@@ -107,26 +125,68 @@ func enhance_item(slot: String) -> bool:
 		return false
 
 func get_total_equipment_stats() -> Dictionary:
-	var total := {"attack": 0, "defense": 0}
+	## Calculate total stats from all equipped items including enhancement bonuses.
+	## Expanded to support: attack, defense, max_hp, max_mp, crit_chance, speed
+	var total := {
+		"attack": 0,
+		"defense": 0,
+		"max_hp": 0,
+		"max_mp": 0,
+		"crit_chance": 0.0,
+		"speed": 0.0,
+	}
+
 	for slot in equipped:
 		var item: Dictionary = equipped[slot]
-		var base_atk: int = item.get("attack", 0)
-		var base_def: int = item.get("defense", 0)
-		var level: int = item.get("enhance_level", 0)
+		var stats: Dictionary = item.get("stats", {})
+		var enhance_level: int = item.get("enhance_level", 0)
+		var grade = item.get("grade", EquipmentData.Grade.COMMON)
+		var enhance_mult: float = EquipmentData.GRADE_ENHANCE_MULTIPLIER.get(grade, 1.0)
+
+		# Add base item stats
+		for stat in stats:
+			if total.has(stat):
+				total[stat] += stats[stat]
+
+		# Legacy support: direct attack/defense on item without stats dict
+		if not stats.has("attack") and item.has("attack"):
+			total["attack"] += item.get("attack", 0)
+		if not stats.has("defense") and item.has("defense"):
+			total["defense"] += item.get("defense", 0)
+
+		# Add enhancement bonuses (scaled by grade)
 		var bonus: Dictionary = ENHANCE_BONUS_PER_LEVEL.get(slot, {"attack": 0, "defense": 0})
-		total["attack"] += base_atk + (bonus["attack"] * level)
-		total["defense"] += base_def + (bonus["defense"] * level)
+		total["attack"] += int(bonus["attack"] * enhance_level * enhance_mult)
+		total["defense"] += int(bonus["defense"] * enhance_level * enhance_mult)
+
 	return total
 
 func _recalculate_stats() -> void:
 	var equip_stats := get_total_equipment_stats()
-	# Equipment bonuses are applied on top of base class stats
 	GameManager.player_stats["equip_attack"] = equip_stats["attack"]
 	GameManager.player_stats["equip_defense"] = equip_stats["defense"]
+	GameManager.player_stats["equip_max_hp"] = equip_stats["max_hp"]
+	GameManager.player_stats["equip_max_mp"] = equip_stats["max_mp"]
+	GameManager.player_stats["equip_crit_chance"] = equip_stats["crit_chance"]
+	GameManager.player_stats["equip_speed"] = equip_stats["speed"]
+	EventBus.equipment_stats_changed.emit(equip_stats)
 
 func get_enhance_display_name(item: Dictionary) -> String:
 	var level: int = item.get("enhance_level", 0)
 	var name: String = item.get("name", "Unknown")
+	var grade = item.get("grade", EquipmentData.Grade.COMMON)
+	var grade_name := EquipmentData.get_grade_name(grade)
 	if level == 0:
-		return name
-	return "+" + str(level) + " " + name
+		return "[" + grade_name + "] " + name
+	return "[" + grade_name + "] +" + str(level) + " " + name
+
+func get_gear_score() -> int:
+	## Calculate total gear score — a single number representing equipment power.
+	var score := 0
+	for slot in equipped:
+		var item: Dictionary = equipped[slot]
+		var grade = item.get("grade", EquipmentData.Grade.COMMON)
+		var enhance_level: int = item.get("enhance_level", 0)
+		var grade_value: int = [10, 20, 35, 55, 80][grade] # Points per grade
+		score += grade_value + (enhance_level * 5)
+	return score

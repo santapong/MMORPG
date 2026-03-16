@@ -56,6 +56,16 @@ signal silver_pickup(position: Vector2, amount: int)
 # Enhancement events
 signal enhancement_result(slot: String, level: int, success: bool)
 
+# Skill tree events
+signal skill_points_changed(available: int, total: int)
+signal skill_upgraded(skill_id: String, new_level: int)
+signal skill_unlocked(skill_id: String)
+
+# Equipment events
+signal equipment_equipped(slot: String, item: Dictionary)
+signal equipment_unequipped(slot: String, item: Dictionary)
+signal equipment_stats_changed(total_stats: Dictionary)
+
 # Navigation events
 signal waypoint_set(position: Vector2)
 signal waypoint_cleared()
