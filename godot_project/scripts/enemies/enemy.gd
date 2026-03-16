@@ -1,6 +1,6 @@
 extends CharacterBody2D
 class_name Enemy
-## Basic enemy with AI, health, and drops.
+## Enemy with AI, health, drops, and zone-based stats. BDO-style grinding mob.
 
 @export var enemy_name: String = "Slime"
 @export var max_hp: int = 50
@@ -21,15 +21,68 @@ var state: String = "idle" # idle, chase, attack, dead
 var wander_timer: float = 0.0
 var wander_direction: Vector2 = Vector2.ZERO
 var attack_cooldown: float = 0.0
+var spawn_position: Vector2 = Vector2.ZERO
+var respawn_time: float = 8.0
+
+# Mob identity for drop tables
+var mob_id: String = "slime"
 
 # Possible item drops: [{"id": "potion", "chance": 0.5}, ...]
 @export var drop_table: Array[Dictionary] = []
 
+# Silver value (BDO trash loot)
+var silver_per_kill: int = 0
+
+# Mob color tints by type
+const MOB_COLORS := {
+	"slime": Color(0.3, 1.0, 0.3),
+	"big_slime": Color(0.2, 0.8, 0.2),
+	"wolf": Color(0.6, 0.5, 0.4),
+	"alpha_wolf": Color(0.4, 0.3, 0.25),
+	"forest_spirit": Color(0.5, 1.0, 0.8, 0.8),
+	"bandit": Color(0.8, 0.5, 0.3),
+	"bandit_archer": Color(0.7, 0.4, 0.3),
+	"bandit_chief": Color(0.9, 0.3, 0.2),
+	"skeleton": Color(0.9, 0.9, 0.8),
+	"skeleton_mage": Color(0.7, 0.5, 0.9),
+	"bone_golem": Color(0.8, 0.7, 0.6),
+	"lich": Color(0.5, 0.2, 0.8),
+	"imp": Color(1.0, 0.4, 0.2),
+	"demon_soldier": Color(0.8, 0.1, 0.1),
+	"hellhound": Color(1.0, 0.3, 0.0),
+	"demon_lord": Color(0.6, 0.0, 0.0),
+}
+
 func _ready() -> void:
 	current_hp = max_hp
+	spawn_position = global_position
 	add_to_group("enemies")
 	nametag.text = enemy_name
 	_update_hp_bar()
+	# Apply mob color
+	sprite.modulate = MOB_COLORS.get(mob_id, Color(1, 0.3, 0.3))
+
+func setup_from_mob_id(id: String, zone_silver: int = 0) -> void:
+	mob_id = id
+	var stats := ZoneData.get_mob_stats(id)
+	if stats.is_empty():
+		return
+	max_hp = stats.get("hp", 50)
+	attack_power = stats.get("atk", 5)
+	defense = stats.get("def", 2)
+	move_speed = stats.get("speed", 60.0)
+	exp_reward = stats.get("exp", 25)
+	detection_range = stats.get("detect", 200.0)
+	silver_per_kill = zone_silver
+
+	# Load drop table from ZoneData
+	var drops := ZoneData.get_mob_drops(id)
+	drop_table.clear()
+	for drop in drops:
+		drop_table.append(drop)
+
+	current_hp = max_hp
+	sprite.modulate = MOB_COLORS.get(id, Color(1, 0.3, 0.3))
 
 func _physics_process(delta: float) -> void:
 	if state == "dead":
@@ -48,11 +101,15 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func _do_idle(delta: float) -> void:
-	# Wander randomly
+	# Wander randomly near spawn
 	wander_timer -= delta
 	if wander_timer <= 0.0:
 		wander_direction = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
 		wander_timer = randf_range(1.0, 3.0)
+
+	# Stay near spawn point
+	if global_position.distance_to(spawn_position) > 150.0:
+		wander_direction = (spawn_position - global_position).normalized()
 
 	velocity = wander_direction * move_speed * 0.3
 
@@ -61,7 +118,7 @@ func _do_idle(delta: float) -> void:
 	if target and global_position.distance_to(target.global_position) <= detection_range:
 		state = "chase"
 
-func _do_chase(delta: float) -> void:
+func _do_chase(_delta: float) -> void:
 	if not is_instance_valid(target):
 		state = "idle"
 		return
@@ -102,9 +159,12 @@ func take_damage(amount: int, attacker_id: int) -> void:
 	current_hp -= actual_damage
 	_update_hp_bar()
 
-	# Flash red
-	sprite.modulate = Color.RED
-	get_tree().create_timer(0.1).timeout.connect(func(): sprite.modulate = Color.WHITE)
+	EventBus.damage_dealt.emit(attacker_id, get_instance_id(), actual_damage)
+
+	# Flash white
+	sprite.modulate = Color.WHITE
+	var original_color: Color = MOB_COLORS.get(mob_id, Color(1, 0.3, 0.3))
+	get_tree().create_timer(0.1).timeout.connect(func(): sprite.modulate = original_color)
 
 	if current_hp <= 0:
 		_die(attacker_id)
@@ -114,23 +174,47 @@ func _die(killer_id: int) -> void:
 	EventBus.entity_died.emit(get_instance_id())
 	GameManager.add_exp(exp_reward)
 
-	# Drop items
+	# Award silver for kill
+	if silver_per_kill > 0:
+		SilverManager.add_silver(silver_per_kill, "mob_kill")
+		EventBus.silver_pickup.emit(global_position, silver_per_kill)
+
+	# Drop items from drop table
 	for drop in drop_table:
 		if randf() <= drop.get("chance", 0.0):
-			EventBus.item_picked_up.emit(drop)
+			var item := drop.duplicate()
+			item.erase("chance") # Remove chance from the item data
+
+			# Handle trash loot — auto-sell for silver
+			if item.get("type", "") == "trash_loot":
+				var silver_val: int = item.get("silver_value", 0) * item.get("quantity", 1)
+				SilverManager.add_silver(silver_val, "trash_loot")
+				EventBus.silver_pickup.emit(global_position, silver_val)
+			elif item.get("type", "") == "rare_drop":
+				var silver_val: int = item.get("silver_value", 0)
+				SilverManager.add_silver(silver_val, "rare_drop")
+				SilverManager.session_rare_drops += 1
+				SilverManager.rare_drop_obtained.emit(item.get("name", "Unknown"))
+				EventBus.silver_pickup.emit(global_position, silver_val)
+			elif item.get("type", "") == "enhancement_mat":
+				EventBus.item_picked_up.emit(item)
+			else:
+				EventBus.item_picked_up.emit(item)
 
 	# Respawn after delay
 	visible = false
 	set_physics_process(false)
-	await get_tree().create_timer(10.0).timeout
+	await get_tree().create_timer(respawn_time).timeout
 	_respawn()
 
 func _respawn() -> void:
 	current_hp = max_hp
 	state = "idle"
+	global_position = spawn_position
 	visible = true
 	set_physics_process(true)
 	_update_hp_bar()
+	sprite.modulate = MOB_COLORS.get(mob_id, Color(1, 0.3, 0.3))
 
 func _update_hp_bar() -> void:
 	if hp_bar:
