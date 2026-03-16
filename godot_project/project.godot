@@ -16,6 +16,7 @@ EventBus="*res://scripts/autoload/event_bus.gd"
 GameManager="*res://scripts/autoload/game_manager.gd"
 NetworkManager="*res://scripts/autoload/network_manager.gd"
 SilverManager="*res://scripts/economy/silver_manager.gd"
+SaveManager="*res://scripts/autoload/save_manager.gd"
 
 [display]
 

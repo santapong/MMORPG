@@ -173,11 +173,14 @@ const MOB_DROPS := {
 		{"id": "bone_fragment", "name": "Bone Fragment", "type": "trash_loot", "silver_value": 600, "stackable": true, "quantity": 3, "chance": 0.9},
 		{"id": "golem_core", "name": "Golem Core", "type": "rare_drop", "silver_value": 8000, "stackable": true, "quantity": 1, "chance": 0.04},
 		{"id": "heavy_armor", "name": "Heavy Plate Armor", "type": "equipment", "slot": "body", "attack": 0, "defense": 18, "stackable": false, "quantity": 1, "chance": 0.02},
+		{"id": "enchant_armor_stone", "name": "Black Stone (Armor)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.06},
 	],
 	"lich": [
 		{"id": "dark_crystal", "name": "Dark Crystal", "type": "rare_drop", "silver_value": 5000, "stackable": true, "quantity": 1, "chance": 0.1},
 		{"id": "lich_staff", "name": "Lich Staff", "type": "equipment", "slot": "weapon", "attack": 25, "defense": 0, "stackable": false, "quantity": 1, "chance": 0.02},
 		{"id": "enchant_stone", "name": "Black Stone (Weapon)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.08},
+		{"id": "enchant_armor_stone", "name": "Black Stone (Armor)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.06},
+		{"id": "cron_stone", "name": "Cron Stone", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.03},
 	],
 	"imp": [
 		{"id": "demon_blood", "name": "Demon Blood", "type": "trash_loot", "silver_value": 1500, "stackable": true, "quantity": 1, "chance": 0.7},
@@ -188,16 +191,27 @@ const MOB_DROPS := {
 		{"id": "demon_armor_shard", "name": "Demon Armor Shard", "type": "rare_drop", "silver_value": 15000, "stackable": true, "quantity": 1, "chance": 0.03},
 		{"id": "enchant_stone", "name": "Black Stone (Weapon)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.06},
 		{"id": "enchant_armor_stone", "name": "Black Stone (Armor)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.06},
+		{"id": "concentrated_weapon_stone", "name": "Concentrated Black Stone (Weapon)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.02},
+		{"id": "concentrated_armor_stone", "name": "Concentrated Black Stone (Armor)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.02},
+		{"id": "cron_stone", "name": "Cron Stone", "type": "enhancement_mat", "stackable": true, "quantity": 2, "chance": 0.04},
 	],
 	"hellhound": [
 		{"id": "demon_blood", "name": "Demon Blood", "type": "trash_loot", "silver_value": 1500, "stackable": true, "quantity": 1, "chance": 0.8},
 		{"id": "hellfire_fang", "name": "Hellfire Fang", "type": "rare_drop", "silver_value": 12000, "stackable": true, "quantity": 1, "chance": 0.04},
+		{"id": "enchant_stone", "name": "Black Stone (Weapon)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.05},
+		{"id": "enchant_armor_stone", "name": "Black Stone (Armor)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.05},
+		{"id": "cron_stone", "name": "Cron Stone", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.03},
 	],
 	"demon_lord": [
 		{"id": "demon_blood", "name": "Demon Blood", "type": "trash_loot", "silver_value": 1500, "stackable": true, "quantity": 5, "chance": 0.95},
 		{"id": "demon_lord_token", "name": "Demon Lord Token", "type": "rare_drop", "silver_value": 50000, "stackable": true, "quantity": 1, "chance": 0.02},
 		{"id": "demonic_blade", "name": "Demonic Blade", "type": "equipment", "slot": "weapon", "attack": 50, "defense": 0, "stackable": false, "quantity": 1, "chance": 0.01},
 		{"id": "enchant_stone", "name": "Black Stone (Weapon)", "type": "enhancement_mat", "stackable": true, "quantity": 2, "chance": 0.1},
+		{"id": "enchant_armor_stone", "name": "Black Stone (Armor)", "type": "enhancement_mat", "stackable": true, "quantity": 2, "chance": 0.08},
+		{"id": "concentrated_weapon_stone", "name": "Concentrated Black Stone (Weapon)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.05},
+		{"id": "concentrated_armor_stone", "name": "Concentrated Black Stone (Armor)", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.05},
+		{"id": "cron_stone", "name": "Cron Stone", "type": "enhancement_mat", "stackable": true, "quantity": 3, "chance": 0.06},
+		{"id": "advice_of_valks", "name": "Advice of Valks", "type": "enhancement_mat", "stackable": true, "quantity": 1, "chance": 0.02},
 	],
 }
 
