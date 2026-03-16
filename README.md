@@ -87,12 +87,19 @@ BDO-style gear enhancement from +0 to +20:
 - 5 grades: Common (gray), Uncommon (green), Rare (blue), Epic (purple), Legendary (orange)
 - 40+ unique items with class restrictions and level requirements
 
+### Save System
+- **5 character slots** — Create up to 5 different characters with separate progress
+- **Auto-save** — Game automatically saves every 60 seconds while playing
+- **Save on exit** — Progress is saved when returning to the main menu
+- **Character select screen** — Shows name, class, level, gear score, silver, and playtime per slot
+- Save files stored in Godot's `user://saves/` directory as JSON
+
 ## Project Structure
 
 ```
 godot_project/
   scripts/
-    autoload/       Global managers (EventBus, GameManager, NetworkManager)
+    autoload/       Global managers (EventBus, GameManager, NetworkManager, SaveManager)
     combat/         Damage calculation and crit system
     class/          Class definitions and stats
     economy/        Silver currency manager

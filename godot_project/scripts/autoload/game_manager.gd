@@ -245,6 +245,27 @@ func _reset_passives() -> void:
 
 # === Leveling ===
 
+func reset_state() -> void:
+	## Reset all player state for a fresh character.
+	player_name = "Player"
+	player_class = ClassData.ClassType.WARRIOR
+	skill_points = 0
+	total_skill_points_earned = 0
+	skill_levels = {}
+	active_buffs.clear()
+	_reset_passives()
+	player_stats = {
+		"level": 1, "hp": 100, "max_hp": 100, "mp": 50, "max_mp": 50,
+		"attack": 10, "defense": 5, "speed": 150.0,
+		"exp": 0, "exp_to_level": 100, "crit_chance": 0.1, "crit_damage": 2.0,
+		"equip_attack": 0, "equip_defense": 0, "equip_max_hp": 0, "equip_max_mp": 0,
+		"equip_crit_chance": 0.0, "equip_speed": 0.0,
+		"passive_attack_mult": 0.0, "passive_defense_mult": 0.0,
+		"passive_max_hp_mult": 0.0, "passive_spell_damage_mult": 0.0,
+		"passive_crit_chance": 0.0, "passive_crit_damage": 0.0,
+		"passive_speed_mult": 0.0, "passive_dodge": 0.0, "passive_mana_regen": 0,
+	}
+
 func start_game(username: String) -> void:
 	player_name = username
 	is_in_game = true
@@ -252,6 +273,9 @@ func start_game(username: String) -> void:
 	get_tree().change_scene_to_file("res://scenes/maps/world.tscn")
 
 func return_to_menu() -> void:
+	# Auto-save before leaving
+	if SaveManager.current_slot >= 0:
+		SaveManager.save_game(SaveManager.current_slot)
 	is_in_game = false
 	NetworkManager.disconnect_from_server()
 	get_tree().change_scene_to_file("res://scenes/main_menu/main_menu.tscn")

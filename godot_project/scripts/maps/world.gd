@@ -36,6 +36,9 @@ func _ready() -> void:
 	EventBus.player_joined.connect(_on_player_joined)
 	EventBus.player_left.connect(_on_player_left)
 
+	# Apply saved state after everything is set up
+	call_deferred("_apply_saved_state")
+
 func _process(_delta: float) -> void:
 	# Sync remote player positions
 	for peer_id in NetworkManager.players:
@@ -282,3 +285,8 @@ func _find_inventory_panel() -> InventoryPanel:
 
 func get_comparison_panel() -> PanelContainer:
 	return comparison_panel_node
+
+func _apply_saved_state() -> void:
+	## Restore inventory, equipment, and position from save data after world loads.
+	SaveManager.apply_pending_state()
+	SaveManager.start_playtime_tracking()

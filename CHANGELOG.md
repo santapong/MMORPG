@@ -4,6 +4,31 @@ All notable changes to the Pixel Grinder MMORPG project.
 
 ---
 
+## [0.5.0] - 2026-03-16
+
+### Added — Save System & Multiple Characters
+- **5 character slots**: Create up to 5 separate characters with independent progress
+- **Character select screen**: Shows character name, class, level, gear score, silver, and playtime per slot
+- **Character creation flow**: Name input (max 16 chars) + class selection before entering the game
+- **Delete character**: Remove saved characters from slot select screen
+- **Auto-save**: Game state saved automatically every 60 seconds while in-game
+- **Save on exit**: Auto-saves when returning to main menu
+- **Full state serialization**: Saves player stats, level, class, equipment, enhancement levels, failstacks, enhancement history, inventory (all items and stacks), silver, skill tree, and world position
+- **Pending state restoration**: Equipment, inventory, and position restored after world scene loads
+- **SaveManager autoload**: New global manager registered in project.godot
+- **Playtime tracking**: Accumulated play time tracked across sessions per character
+
+### Changed
+- Main menu now starts on character select screen instead of going directly to class/network options
+- GameManager gained `reset_state()` for clean character initialization
+- GameManager auto-saves current slot before returning to menu
+- World scene applies saved state via deferred call after all systems initialize
+
+### New Files
+- `scripts/autoload/save_manager.gd` — Save/load/delete with 5 slots, auto-save timer, full serialization
+
+---
+
 ## [0.4.0] - 2026-03-16
 
 ### Added — Full Enhancement System Overhaul
