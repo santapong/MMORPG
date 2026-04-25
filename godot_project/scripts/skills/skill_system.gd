@@ -8,12 +8,12 @@ signal skill_cooldown_updated(skill_id: String, remaining: float, total: float)
 signal skill_failed(skill_id: String, reason: String)
 
 var cooldowns: Dictionary = {} # skill_id -> remaining cooldown
-var owner_node: Node2D = null
+var owner_node: Node3D = null
 
 func _ready() -> void:
 	pass
 
-func setup(owner: Node2D) -> void:
+func setup(owner: Node3D) -> void:
 	owner_node = owner
 
 func _process(delta: float) -> void:
@@ -41,13 +41,13 @@ func can_use_skill(skill_id: String) -> bool:
 		return false
 	return true
 
-func use_skill(skill_id: String) -> Array[Node2D]:
+func use_skill(skill_id: String) -> Array[Node3D]:
 	## Execute a skill. Returns array of hit enemies.
 	if not can_use_skill(skill_id):
 		return []
 
 	var skill := _get_effective_skill(skill_id)
-	var hit_enemies: Array[Node2D] = []
+	var hit_enemies: Array[Node3D] = []
 
 	# Check if this is a buff/passive skill
 	if skill.get("buff_type", "") != "" and skill.get("damage_multiplier", 0.0) == 0.0:
@@ -77,8 +77,10 @@ func use_skill(skill_id: String) -> Array[Node2D]:
 	if skill.get("class", -1) == ClassData.ClassType.MAGE:
 		base_damage = int(base_damage * GameManager.get_spell_damage_mult())
 
-	var skill_range: float = skill.get("range", 40.0)
-	var aoe_radius: float = skill.get("aoe_radius", 0.0)
+	# Skill ranges are stored in pixel units; scale into meters for 3D.
+	const WORLD_SCALE := 1.0 / 30.0
+	var skill_range: float = skill.get("range", 40.0) * WORLD_SCALE
+	var aoe_radius: float = skill.get("aoe_radius", 0.0) * WORLD_SCALE
 	var max_hits: int = skill.get("hits", 1)
 	var hits_landed := 0
 
@@ -95,7 +97,7 @@ func use_skill(skill_id: String) -> Array[Node2D]:
 	for entry in enemies_with_dist:
 		if hits_landed >= max_hits:
 			break
-		var enemy: Node2D = entry["enemy"]
+		var enemy: Node3D = entry["enemy"]
 
 		if aoe_radius > 0.0:
 			if entry["dist"] <= skill_range:
@@ -128,9 +130,9 @@ func _apply_skill_buff(skill_id: String, skill: Dictionary) -> void:
 	GameManager.apply_buff(buff_type, buff_value, buff_duration)
 
 	skill_used.emit(skill_id)
-	EventBus.skill_activated.emit(skill_id, owner_node.global_position if is_instance_valid(owner_node) else Vector2.ZERO)
+	EventBus.skill_activated.emit(skill_id, owner_node.global_position if is_instance_valid(owner_node) else Vector3.ZERO)
 
-func _deal_damage_to(enemy: Node2D, base_damage: int, _skill_id: String) -> void:
+func _deal_damage_to(enemy: Node3D, base_damage: int, _skill_id: String) -> void:
 	var crit_result := CombatSystem.calculate_crit(
 		base_damage,
 		GameManager.get_total_crit_chance(),

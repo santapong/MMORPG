@@ -1,24 +1,37 @@
-[gd_scene load_steps=2 format=3 uid="uid://otherplayer001"]
+[gd_scene load_steps=5 format=3 uid="uid://otherplayer001"]
 
 [ext_resource type="Script" path="res://scripts/player/other_player.gd" id="1_other"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
-size = Vector2(16, 16)
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.4
+height = 1.8
 
-[node name="OtherPlayer" type="CharacterBody2D" groups=["players"]]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_other"]
+albedo_color = Color(0.6, 0.7, 0.9, 1)
+roughness = 0.8
+
+[node name="OtherPlayer" type="CharacterBody3D" groups=["players"]]
 collision_layer = 1
-collision_mask = 4
+collision_mask = 12
 script = ExtResource("1_other")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_other")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("RectangleShape2D_body")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_body")
 
-[node name="Nametag" type="Label" parent="."]
-offset_left = -30
-offset_top = -24
-offset_right = 30
-offset_bottom = -10
-horizontal_alignment = 1
+[node name="Nametag" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+billboard = 1
+fixed_size = true
 text = "Player"
+font_size = 32
+outline_size = 8

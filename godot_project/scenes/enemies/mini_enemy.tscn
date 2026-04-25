@@ -1,26 +1,38 @@
-[gd_scene load_steps=3 format=3 uid="uid://mini_enemy001"]
+[gd_scene load_steps=5 format=3 uid="uid://mini_enemy001"]
 
 [ext_resource type="Script" path="res://scripts/enemies/mini_enemy.gd" id="1_mini"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
-size = Vector2(10, 10)
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.25
+height = 0.8
 
-[node name="MiniEnemy" type="CharacterBody2D" groups=["enemies"]]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.25
+height = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mini"]
+albedo_color = Color(0.8, 0.8, 0.8, 0.85)
+roughness = 0.8
+transparency = 1
+
+[node name="MiniEnemy" type="CharacterBody3D" groups=["enemies"]]
 collision_layer = 2
-collision_mask = 1
+collision_mask = 9
 script = ExtResource("1_mini")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-modulate = Color(0.8, 0.8, 0.8, 0.8)
-scale = Vector2(0.5, 0.5)
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_mini")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("RectangleShape2D_body")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("CapsuleShape3D_body")
 
-[node name="Nametag" type="Label" parent="."]
-offset_left = -25
-offset_top = -20
-offset_right = 25
-offset_bottom = -10
-horizontal_alignment = 1
+[node name="Nametag" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+billboard = 1
+fixed_size = true
 text = "Minion"
+font_size = 22
+outline_size = 4
