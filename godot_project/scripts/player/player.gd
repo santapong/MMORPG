@@ -1,51 +1,72 @@
-extends CharacterBody2D
+extends CharacterBody3D
 class_name Player
-## Main player controller — handles movement, skills, and combat. BDO-style grinding.
+## 3D player controller — WASD ground movement on X/Z, gravity on Y,
+## mouse-look on the SpringArm3D camera. BDO action-cam style.
 
-@export var speed: float = 150.0
+@export var speed: float = 4.5
+@export var mouse_sensitivity: float = 0.005
 
-@onready var sprite: Sprite2D = $Sprite2D
+@onready var mesh: MeshInstance3D = $Mesh
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
-@onready var camera: Camera2D = $Camera2D
-@onready var collision: CollisionShape2D = $CollisionShape2D
-@onready var attack_area: Area2D = $AttackArea
-@onready var nametag: Label = $Nametag
+@onready var camera_pivot: Node3D = $CameraPivot
+@onready var spring_arm: SpringArm3D = $CameraPivot/SpringArm3D
+@onready var camera: Camera3D = $CameraPivot/SpringArm3D/Camera3D
+@onready var collision: CollisionShape3D = $CollisionShape3D
+@onready var attack_area: Area3D = $AttackArea
+@onready var nametag: Label3D = $Nametag
 
 var is_local: bool = false
 var player_peer_id: int = -1
-var facing_direction: Vector2 = Vector2.DOWN
+var facing_direction: Vector3 = Vector3.FORWARD
 
-# Skill system
 var skill_system: SkillSystem = null
-
-# Equipment system
 var equipment: EquipmentSystem = null
 
-# Mana regen
 var mana_regen_timer: float = 0.0
 const MANA_REGEN_INTERVAL: float = 2.0
 const MANA_REGEN_AMOUNT: int = 3
 
+var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
+
+# BDO-style attack chunk state machine.
+# Each attack is a chunk with three phases:
+#   startup        — 0..cancel_open    : new attacks are queued, not played
+#   cancel_window  — cancel_open..end  : next attack cancels current and chains
+#   recovery       — after end         : back to neutral, can move freely
+# Once GLTF rigs land, replace _update_animation("attack") with
+# AnimationTree.travel("attack_chunk_<N>") and read durations from the
+# AnimationNodeStateMachine.
+const ATTACK_CHUNK_DURATION: float = 0.4
+const ATTACK_CANCEL_WINDOW_OPEN: float = 0.24  # 60% — BDO research target
+var _attack_phase: String = "neutral"  # neutral / startup / cancel_window
+var _attack_phase_timer: float = 0.0
+var _queued_attack: bool = false
+var _combo_index: int = 0
+const COMBO_MAX: int = 3
+
 func _ready() -> void:
 	if is_local:
-		camera.enabled = true
+		camera.current = true
 		nametag.text = GameManager.player_name
-		speed = GameManager.player_stats["speed"]
+		speed = float(GameManager.player_stats["speed"]) / 30.0  # 2D px/s → m/s
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
-		# Initialize skill system
 		skill_system = SkillSystem.new()
 		add_child(skill_system)
 		skill_system.setup(self)
 
-		# Initialize equipment system
 		equipment = EquipmentSystem.new()
 		add_child(equipment)
 
-		# Tint sprite based on class
 		var class_info := ClassData.get_class_info(GameManager.player_class)
-		sprite.modulate = class_info.get("color", Color.WHITE)
+		var class_color: Color = class_info.get("color", Color.WHITE)
+		var mat: StandardMaterial3D = mesh.get_active_material(0)
+		if mat:
+			mat = mat.duplicate()
+			mat.albedo_color = class_color
+			mesh.set_surface_override_material(0, mat)
 	else:
-		camera.enabled = false
+		camera.current = false
 
 func get_skill_system() -> SkillSystem:
 	return skill_system
@@ -53,61 +74,114 @@ func get_skill_system() -> SkillSystem:
 func get_equipment_system() -> EquipmentSystem:
 	return equipment
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not is_local:
+		return
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		camera_pivot.rotate_y(-event.relative.x * mouse_sensitivity)
+		spring_arm.rotate_x(-event.relative.y * mouse_sensitivity)
+		spring_arm.rotation.x = clamp(spring_arm.rotation.x, deg_to_rad(-70), deg_to_rad(20))
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		Input.mouse_mode = (
+			Input.MOUSE_MODE_VISIBLE
+			if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+			else Input.MOUSE_MODE_CAPTURED
+		)
+
 func _physics_process(delta: float) -> void:
 	if not is_local:
 		return
 
-	var input_dir := Vector2.ZERO
-	input_dir.x = Input.get_axis("move_left", "move_right")
-	input_dir.y = Input.get_axis("move_up", "move_down")
-	input_dir = input_dir.normalized()
+	if not is_on_floor():
+		velocity.y -= _gravity * delta
+	else:
+		velocity.y = 0.0
 
-	velocity = input_dir * GameManager.get_total_speed()
+	var input_dir := Vector2(
+		Input.get_axis("move_left", "move_right"),
+		Input.get_axis("move_up", "move_down")
+	).normalized()
 
-	if input_dir != Vector2.ZERO:
-		facing_direction = input_dir
+	# Move relative to camera yaw so W is "forward from camera".
+	var basis_yaw := Basis(Vector3.UP, camera_pivot.rotation.y)
+	var move_vec: Vector3 = basis_yaw * Vector3(input_dir.x, 0.0, input_dir.y)
+
+	var move_speed := float(GameManager.get_total_speed()) / 30.0
+	velocity.x = move_vec.x * move_speed
+	velocity.z = move_vec.z * move_speed
+
+	if move_vec.length() > 0.01:
+		facing_direction = move_vec.normalized()
+		# Face movement direction (smooth turn).
+		var target_yaw := atan2(facing_direction.x, facing_direction.z)
+		rotation.y = lerp_angle(rotation.y, target_yaw, 12.0 * delta)
 		_update_animation("walk")
 	else:
 		_update_animation("idle")
 
 	move_and_slide()
 
-	# Sync position to other players
 	if multiplayer.has_multiplayer_peer():
 		NetworkManager.sync_player_position.rpc(global_position)
 
-	# Attack input (basic attack)
-	if Input.is_action_just_pressed("attack"):
-		_perform_attack()
+	_tick_attack_phase(delta)
 
-	# Interact input
+	if Input.is_action_just_pressed("attack"):
+		_on_attack_input()
+
 	if Input.is_action_just_pressed("interact"):
 		_try_interact()
 
-	# Mana regen
 	mana_regen_timer += delta
 	if mana_regen_timer >= MANA_REGEN_INTERVAL:
 		mana_regen_timer = 0.0
 		_regen_mana()
 
 func _update_animation(action: String) -> void:
-	var dir_name := _get_direction_name()
-	var anim_name := action + "_" + dir_name
-	if animation_player.has_animation(anim_name):
-		animation_player.play(anim_name)
+	# Placeholder — animation graph lands in step 10 with the GLTF rig.
+	if animation_player.has_animation(action):
+		animation_player.play(action)
 
-func _get_direction_name() -> String:
-	if abs(facing_direction.x) > abs(facing_direction.y):
-		return "right" if facing_direction.x > 0 else "left"
-	else:
-		return "down" if facing_direction.y > 0 else "up"
+func _on_attack_input() -> void:
+	## Public entry point for the attack action — gated by the chunk machine.
+	match _attack_phase:
+		"neutral":
+			_start_attack_chunk(0)
+		"startup":
+			# Buffered: fires automatically when cancel window opens.
+			_queued_attack = true
+		"cancel_window":
+			# Chain immediately into the next chunk.
+			_start_attack_chunk(_combo_index + 1)
+
+func _start_attack_chunk(combo_index: int) -> void:
+	_combo_index = wrapi(combo_index, 0, COMBO_MAX)
+	_attack_phase = "startup"
+	_attack_phase_timer = 0.0
+	_queued_attack = false
+	_perform_attack()
+
+func _tick_attack_phase(delta: float) -> void:
+	if _attack_phase == "neutral":
+		return
+	_attack_phase_timer += delta
+	if _attack_phase == "startup" and _attack_phase_timer >= ATTACK_CANCEL_WINDOW_OPEN:
+		_attack_phase = "cancel_window"
+		# Auto-resolve a buffered input as soon as the cancel opens.
+		if _queued_attack:
+			_start_attack_chunk(_combo_index + 1)
+			return
+	if _attack_phase_timer >= ATTACK_CHUNK_DURATION:
+		_attack_phase = "neutral"
+		_attack_phase_timer = 0.0
+		_combo_index = 0
 
 func _perform_attack() -> void:
-	var anim_name := "attack_" + _get_direction_name()
-	if animation_player.has_animation(anim_name):
-		animation_player.play(anim_name)
+	# Once GLTF rigs land, replace this with
+	#   anim_tree.travel("attack_chunk_%d" % _combo_index)
+	if animation_player.has_animation("attack"):
+		animation_player.play("attack")
 
-	# Check for enemies in attack area
 	var total_attack := GameManager.get_total_attack()
 	for body in attack_area.get_overlapping_bodies():
 		if body.is_in_group("enemies"):
@@ -131,9 +205,8 @@ func _try_interact() -> void:
 			return
 
 func take_damage(amount: int, _attacker_id: int) -> void:
-	# Dodge check from passive skills
 	if randf() < GameManager.get_dodge_chance():
-		return # Dodged!
+		return
 	var total_def := GameManager.get_total_defense()
 	var actual_damage: int = max(1, amount - total_def)
 	GameManager.player_stats["hp"] -= actual_damage
@@ -142,12 +215,19 @@ func take_damage(amount: int, _attacker_id: int) -> void:
 		GameManager.player_stats["hp"],
 		GameManager.player_stats["max_hp"]
 	)
-	# Flash red
-	sprite.modulate = Color.RED
-	var class_color: Color = ClassData.get_class_info(GameManager.player_class).get("color", Color.WHITE)
-	get_tree().create_timer(0.15).timeout.connect(func(): sprite.modulate = class_color)
+	_flash_damage()
 	if GameManager.player_stats["hp"] <= 0:
 		_die()
+
+func _flash_damage() -> void:
+	var mat: StandardMaterial3D = mesh.get_active_material(0)
+	if mat == null:
+		return
+	var original := mat.albedo_color
+	mat.albedo_color = Color.RED
+	get_tree().create_timer(0.15).timeout.connect(
+		func(): mat.albedo_color = original
+	)
 
 func _die() -> void:
 	EventBus.player_died.emit(player_peer_id)
@@ -156,7 +236,7 @@ func _die() -> void:
 	EventBus.player_respawned.connect(_on_respawned, CONNECT_ONE_SHOT)
 
 func _on_respawned(_player_id: int) -> void:
-	global_position = Vector2(300, 300) # Spawn point in starter village
+	global_position = Vector3(0, 1, 0)
 	visible = true
 	set_physics_process(true)
 	EventBus.player_health_changed.emit(

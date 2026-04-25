@@ -2,7 +2,7 @@ extends Node
 ## Global event bus for decoupled communication between systems.
 
 # Player events
-signal player_spawned(player_id: int, position: Vector2)
+signal player_spawned(player_id: int, position: Vector3)
 signal player_died(player_id: int)
 signal player_respawned(player_id: int)
 signal player_level_up(player_id: int, new_level: int)
@@ -16,10 +16,10 @@ signal class_selected(class_type: ClassData.ClassType)
 # Combat events
 signal damage_dealt(attacker_id: int, target_id: int, amount: int)
 signal entity_died(entity_id: int)
-signal critical_hit(position: Vector2, amount: int)
+signal critical_hit(position: Vector3, amount: int)
 
 # Skill events
-signal skill_activated(skill_id: String, position: Vector2)
+signal skill_activated(skill_id: String, position: Vector3)
 
 # Chat events
 signal chat_message_received(sender_name: String, message: String, channel: String)
@@ -51,7 +51,7 @@ signal ui_show_dialog(npc_name: String, dialog_text: String, options: Array)
 signal zone_changed(zone_id: String, zone_name: String)
 
 # Economy events
-signal silver_pickup(position: Vector2, amount: int)
+signal silver_pickup(position: Vector3, amount: int)
 
 # Enhancement events
 signal enhancement_result(slot: String, level: int, success: bool)

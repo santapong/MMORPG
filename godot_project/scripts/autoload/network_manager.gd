@@ -26,7 +26,7 @@ func host_server(port: int = DEFAULT_PORT) -> Error:
 	multiplayer.multiplayer_peer = peer
 	is_server = true
 	var my_id := multiplayer.get_unique_id()
-	players[my_id] = {"name": GameManager.player_name, "position": Vector2.ZERO}
+	players[my_id] = {"name": GameManager.player_name, "position": Vector3.ZERO}
 	GameManager.player_id = my_id
 	print("Server started on port ", port)
 	EventBus.connected_to_server.emit()
@@ -67,7 +67,7 @@ func _on_peer_disconnected(id: int) -> void:
 func _on_connected_to_server() -> void:
 	var my_id := multiplayer.get_unique_id()
 	GameManager.player_id = my_id
-	players[my_id] = {"name": GameManager.player_name, "position": Vector2.ZERO}
+	players[my_id] = {"name": GameManager.player_name, "position": Vector3.ZERO}
 	print("Connected to server with ID: ", my_id)
 	_register_player.rpc(GameManager.player_name)
 	EventBus.connected_to_server.emit()
@@ -86,12 +86,12 @@ func _on_server_disconnected() -> void:
 @rpc("any_peer", "reliable")
 func _register_player(player_name: String) -> void:
 	var sender_id := multiplayer.get_remote_sender_id()
-	players[sender_id] = {"name": player_name, "position": Vector2.ZERO}
+	players[sender_id] = {"name": player_name, "position": Vector3.ZERO}
 	EventBus.player_joined.emit(sender_id, player_name)
 	EventBus.chat_message_received.emit("System", player_name + " joined the game.", "system")
 
 @rpc("any_peer", "unreliable")
-func sync_player_position(pos: Vector2) -> void:
+func sync_player_position(pos: Vector3) -> void:
 	var sender_id := multiplayer.get_remote_sender_id()
 	if sender_id in players:
 		players[sender_id]["position"] = pos

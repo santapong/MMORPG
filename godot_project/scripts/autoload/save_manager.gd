@@ -184,12 +184,12 @@ func _serialize_game_state() -> Dictionary:
 	# Playtime tracking
 	data["playtime"] = _get_total_playtime()
 
-	# Position
+	# Position (3D: save ground X/Z; vertical Y is restored to spawn height)
 	var player := _get_local_player()
 	if player:
-		data["position"] = {"x": player.global_position.x, "y": player.global_position.y}
+		data["position"] = {"x": player.global_position.x, "y": player.global_position.z}
 	else:
-		data["position"] = {"x": 300, "y": 300}
+		data["position"] = {"x": 0, "y": 0}
 
 	return data
 
@@ -253,16 +253,17 @@ func apply_pending_state() -> void:
 		_pending_equipped = {}
 		_pending_history = []
 
-	# Restore position
+	# Restore position (legacy 2D saves: x→X, y→Z; vertical reset to spawn height)
 	var player := _get_local_player()
 	if player:
-		player.global_position = Vector2(
-			_pending_position.get("x", 300),
-			_pending_position.get("y", 300)
+		player.global_position = Vector3(
+			_pending_position.get("x", 0),
+			1.0,
+			_pending_position.get("y", 0)
 		)
 
 ## Helper to find the local player node
-func _get_local_player() -> Node2D:
+func _get_local_player() -> Node3D:
 	var players := get_tree().get_nodes_in_group("players")
 	for p in players:
 		if p.get("is_local") == true:

@@ -1,105 +1,82 @@
-extends Node2D
-## Main game world — spawns player, zone-based enemies, NPCs, and UI.
-## BDO-inspired grinding zones with mob density.
+extends Node3D
+## Main game world (3D) — spawns the local player, enemies, NPCs, and HUD.
+## Pixel-space zone bounds from ZoneData are scaled by WORLD_SCALE into meters.
+## World-position UIs (minimap / world map / waypoint / zone indicator) remain
+## gated; they consume Vector2 pixel coords and project from the player's X/Z.
+
+const WORLD_SCALE: float = 1.0 / 30.0
 
 const PlayerScene := preload("res://scenes/player/player.tscn")
 const OtherPlayerScene := preload("res://scenes/player/other_player.tscn")
 const EnemyScene := preload("res://scenes/enemies/enemy.tscn")
 const NPCScene := preload("res://scenes/npcs/npc.tscn")
 
-@onready var entities: Node2D = $Entities
+const SPAWN_ENEMIES: bool = true
+const SPAWN_NPCS: bool = true
+const ENABLE_DAMAGE_NUMBERS: bool = true
+const ENABLE_WORLD_POSITION_UI: bool = false
+
+@onready var entities: Node3D = $Entities
 @onready var ui_layer: CanvasLayer = $UILayer
-@onready var ground: Node2D = $Ground
+@onready var ground: Node3D = $Ground
 
 var local_player: Player = null
 var other_players: Dictionary = {} # peer_id -> OtherPlayer node
 
-# UI components
 var skill_bar_node: PanelContainer = null
 var grind_tracker_node: PanelContainer = null
 var enhancement_panel_node: PanelContainer = null
 var comparison_panel_node: PanelContainer = null
 var zone_indicator_node: PanelContainer = null
-var damage_numbers_node: Node2D = null
+var damage_numbers_node: Node3D = null
 var minimap_node: PanelContainer = null
 var world_map_node: CanvasLayer = null
 var waypoint_arrow_node: Control = null
 
 func _ready() -> void:
-	_create_zone_backgrounds()
 	_spawn_local_player()
-	_spawn_zone_enemies()
-	_spawn_npcs()
+	if SPAWN_ENEMIES:
+		_spawn_zone_enemies()
+	if SPAWN_NPCS:
+		_spawn_npcs()
 	_setup_grinding_ui()
 
-	# Listen for other players joining/leaving
 	EventBus.player_joined.connect(_on_player_joined)
 	EventBus.player_left.connect(_on_player_left)
 
-	# Apply saved state after everything is set up
 	call_deferred("_apply_saved_state")
 
 func _process(_delta: float) -> void:
-	# Sync remote player positions
+	# Sync remote player positions (Vector3 in network state).
 	for peer_id in NetworkManager.players:
 		if peer_id == GameManager.player_id:
 			continue
 		if peer_id in other_players:
-			var pos: Vector2 = NetworkManager.players[peer_id].get("position", Vector2.ZERO)
+			var pos: Vector3 = NetworkManager.players[peer_id].get("position", Vector3.ZERO)
 			other_players[peer_id].update_position(pos)
 
-	# Update zone indicator based on player position
-	if local_player and zone_indicator_node:
-		zone_indicator_node.update_zone(local_player.global_position)
-		# Also update grind tracker with current zone name
-		if grind_tracker_node:
-			var zone_id := ZoneData.get_zone_at_position(local_player.global_position)
-			var zone := ZoneData.get_zone(zone_id)
-			grind_tracker_node.update_zone(zone.get("name", "Unknown"))
-
-	# Toggle grind tracker with G
 	if Input.is_action_just_pressed("toggle_grind_tracker") and grind_tracker_node:
 		grind_tracker_node.toggle_visible()
 
-	# Toggle enhancement panel with P
 	if Input.is_action_just_pressed("toggle_enhancement") and enhancement_panel_node:
 		enhancement_panel_node.visible = not enhancement_panel_node.visible
 
-	# Toggle world map with M
-	if Input.is_action_just_pressed("toggle_world_map") and world_map_node:
-		world_map_node.visible = not world_map_node.visible
-
-func _create_zone_backgrounds() -> void:
-	## Create colored rectangles for each zone on the ground layer
-	for zone_id in ZoneData.ZONES:
-		var zone: Dictionary = ZoneData.ZONES[zone_id]
-		var bounds: Rect2 = zone["bounds"]
-		var tier: int = zone.get("tier", ZoneData.ZoneTier.SAFE)
-		var color: Color = ZoneData.ZONE_COLORS.get(tier, Color(0.2, 0.35, 0.15))
-
-		var rect := ColorRect.new()
-		rect.position = bounds.position
-		rect.size = bounds.size
-		rect.color = color
-		ground.add_child(rect)
-
-		# Zone name label on the ground
-		var label := Label.new()
-		label.text = zone.get("name", "")
-		label.position = bounds.position + Vector2(10, 10)
-		label.add_theme_font_size_override("font_size", 12)
-		label.add_theme_color_override("font_color", Color(1, 1, 1, 0.4))
-		ground.add_child(label)
+func _pixel_to_world(p: Vector2) -> Vector3:
+	# Treat ZoneData pixel coords as world coords scaled into meters,
+	# centered on the world origin.
+	var center := Vector2(1000, 600)  # ZoneData spans roughly 0..2000, 0..1200
+	var local := p - center
+	return Vector3(local.x * WORLD_SCALE, 1.0, local.y * WORLD_SCALE)
 
 func _spawn_local_player() -> void:
 	local_player = PlayerScene.instantiate() as Player
 	local_player.is_local = true
 	local_player.player_peer_id = GameManager.player_id
-	local_player.global_position = Vector2(300, 300) # Starter village
+	local_player.global_position = _pixel_to_world(Vector2(300, 300))
 	entities.add_child(local_player)
 
 func _spawn_zone_enemies() -> void:
-	## Spawn enemies based on zone data — BDO-style mob density per zone
+	## Spawn enemies based on zone data — BDO-style mob density per zone.
 	for zone_id in ZoneData.ZONES:
 		var zone: Dictionary = ZoneData.ZONES[zone_id]
 		var mobs: Array = zone.get("mobs", [])
@@ -111,13 +88,11 @@ func _spawn_zone_enemies() -> void:
 		if mobs.is_empty() or mob_count == 0:
 			continue
 
-		# Calculate total weight for weighted random
 		var total_weight := 0
 		for mob in mobs:
 			total_weight += mob.get("weight", 1)
 
 		for i in mob_count:
-			# Pick a mob type based on weights
 			var roll := randi() % total_weight
 			var accumulated := 0
 			var selected_mob: Dictionary = mobs[0]
@@ -134,12 +109,12 @@ func _spawn_zone_enemies() -> void:
 			enemy.setup_from_mob_id(mob_id, zone_silver)
 			enemy.respawn_time = zone_respawn
 
-			# Random position within zone bounds (with margin)
 			var margin := 40.0
-			var pos := Vector2(
+			var px := Vector2(
 				randf_range(bounds.position.x + margin, bounds.end.x - margin),
 				randf_range(bounds.position.y + margin, bounds.end.y - margin)
 			)
+			var pos := _pixel_to_world(px)
 			enemy.global_position = pos
 			enemy.spawn_position = pos
 			enemy.nametag.text = mob_name
@@ -187,40 +162,34 @@ func _spawn_npcs() -> void:
 	for data in npc_data:
 		var npc := NPCScene.instantiate() as NPC
 		npc.npc_name = data["name"]
-		npc.global_position = data["pos"]
+		npc.global_position = _pixel_to_world(data["pos"])
 		npc.dialog_lines = data["dialog"]
 		npc.is_shopkeeper = data.get("is_shop", false)
 		entities.add_child(npc)
 
 func _setup_grinding_ui() -> void:
-	# Skill bar
 	var SkillBarScript := preload("res://scripts/ui/skill_bar.gd")
 	skill_bar_node = PanelContainer.new()
 	skill_bar_node.set_script(SkillBarScript)
 	ui_layer.add_child(skill_bar_node)
-	# Connect skill system after player is ready
 	if local_player and local_player.get_skill_system():
 		skill_bar_node.setup(local_player.get_skill_system())
 
-	# Grind tracker
 	var GrindTrackerScript := preload("res://scripts/ui/grind_tracker.gd")
 	grind_tracker_node = PanelContainer.new()
 	grind_tracker_node.set_script(GrindTrackerScript)
 	ui_layer.add_child(grind_tracker_node)
 
-	# Enhancement panel
 	var EnhancementScript := preload("res://scripts/ui/enhancement_panel.gd")
 	enhancement_panel_node = PanelContainer.new()
 	enhancement_panel_node.set_script(EnhancementScript)
 	ui_layer.add_child(enhancement_panel_node)
 	if local_player and local_player.get_equipment_system():
-		# Connect equipment system to inventory for material tracking
 		var inv_panel := _find_inventory_panel()
 		if inv_panel and inv_panel.inventory:
 			local_player.get_equipment_system().setup_inventory(inv_panel.inventory)
 		enhancement_panel_node.setup(local_player.get_equipment_system())
 
-	# Equipment comparison panel
 	var ComparisonScript := preload("res://scripts/ui/equipment_comparison_panel.gd")
 	comparison_panel_node = PanelContainer.new()
 	comparison_panel_node.set_script(ComparisonScript)
@@ -228,33 +197,32 @@ func _setup_grinding_ui() -> void:
 	if local_player and local_player.get_equipment_system():
 		comparison_panel_node.setup(local_player.get_equipment_system())
 
-	# Zone indicator
+	if ENABLE_DAMAGE_NUMBERS:
+		var DamageNumbersScript := preload("res://scripts/ui/damage_numbers.gd")
+		damage_numbers_node = Node3D.new()
+		damage_numbers_node.set_script(DamageNumbersScript)
+		entities.add_child(damage_numbers_node)
+
+	if not ENABLE_WORLD_POSITION_UI:
+		return
+
 	var ZoneIndicatorScript := preload("res://scripts/ui/zone_indicator.gd")
 	zone_indicator_node = PanelContainer.new()
 	zone_indicator_node.set_script(ZoneIndicatorScript)
 	ui_layer.add_child(zone_indicator_node)
 
-	# Damage numbers
-	var DamageNumbersScript := preload("res://scripts/ui/damage_numbers.gd")
-	damage_numbers_node = Node2D.new()
-	damage_numbers_node.set_script(DamageNumbersScript)
-	entities.add_child(damage_numbers_node)
-
-	# Minimap
 	var MinimapScript := preload("res://scripts/ui/minimap.gd")
 	minimap_node = PanelContainer.new()
 	minimap_node.set_script(MinimapScript)
 	ui_layer.add_child(minimap_node)
 	minimap_node.setup(local_player)
 
-	# World map overlay
 	var WorldMapScript := preload("res://scripts/ui/world_map.gd")
 	world_map_node = CanvasLayer.new()
 	world_map_node.set_script(WorldMapScript)
 	add_child(world_map_node)
 	world_map_node.setup(local_player)
 
-	# Waypoint navigation arrow
 	var WaypointArrowScript := preload("res://scripts/ui/waypoint_arrow.gd")
 	waypoint_arrow_node = Control.new()
 	waypoint_arrow_node.set_script(WaypointArrowScript)
@@ -287,6 +255,5 @@ func get_comparison_panel() -> PanelContainer:
 	return comparison_panel_node
 
 func _apply_saved_state() -> void:
-	## Restore inventory, equipment, and position from save data after world loads.
 	SaveManager.apply_pending_state()
 	SaveManager.start_playtime_tracking()
