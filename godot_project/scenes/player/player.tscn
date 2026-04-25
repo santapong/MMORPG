@@ -15,7 +15,12 @@ radius = 1.6
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_player"]
 albedo_color = Color(0.788, 0.714, 0.878, 1)
-roughness = 0.8
+roughness = 0.95
+diffuse_mode = 3
+specular_mode = 1
+rim_enabled = true
+rim = 0.45
+rim_tint = 0.55
 
 [node name="Player" type="CharacterBody3D" groups=["players"]]
 collision_layer = 1

@@ -28,6 +28,22 @@ const MANA_REGEN_AMOUNT: int = 3
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 
+# BDO-style attack chunk state machine.
+# Each attack is a chunk with three phases:
+#   startup        — 0..cancel_open    : new attacks are queued, not played
+#   cancel_window  — cancel_open..end  : next attack cancels current and chains
+#   recovery       — after end         : back to neutral, can move freely
+# Once GLTF rigs land, replace _update_animation("attack") with
+# AnimationTree.travel("attack_chunk_<N>") and read durations from the
+# AnimationNodeStateMachine.
+const ATTACK_CHUNK_DURATION: float = 0.4
+const ATTACK_CANCEL_WINDOW_OPEN: float = 0.24  # 60% — BDO research target
+var _attack_phase: String = "neutral"  # neutral / startup / cancel_window
+var _attack_phase_timer: float = 0.0
+var _queued_attack: bool = false
+var _combo_index: int = 0
+const COMBO_MAX: int = 3
+
 func _ready() -> void:
 	if is_local:
 		camera.current = true
@@ -108,8 +124,10 @@ func _physics_process(delta: float) -> void:
 	if multiplayer.has_multiplayer_peer():
 		NetworkManager.sync_player_position.rpc(global_position)
 
+	_tick_attack_phase(delta)
+
 	if Input.is_action_just_pressed("attack"):
-		_perform_attack()
+		_on_attack_input()
 
 	if Input.is_action_just_pressed("interact"):
 		_try_interact()
@@ -124,7 +142,43 @@ func _update_animation(action: String) -> void:
 	if animation_player.has_animation(action):
 		animation_player.play(action)
 
+func _on_attack_input() -> void:
+	## Public entry point for the attack action — gated by the chunk machine.
+	match _attack_phase:
+		"neutral":
+			_start_attack_chunk(0)
+		"startup":
+			# Buffered: fires automatically when cancel window opens.
+			_queued_attack = true
+		"cancel_window":
+			# Chain immediately into the next chunk.
+			_start_attack_chunk(_combo_index + 1)
+
+func _start_attack_chunk(combo_index: int) -> void:
+	_combo_index = wrapi(combo_index, 0, COMBO_MAX)
+	_attack_phase = "startup"
+	_attack_phase_timer = 0.0
+	_queued_attack = false
+	_perform_attack()
+
+func _tick_attack_phase(delta: float) -> void:
+	if _attack_phase == "neutral":
+		return
+	_attack_phase_timer += delta
+	if _attack_phase == "startup" and _attack_phase_timer >= ATTACK_CANCEL_WINDOW_OPEN:
+		_attack_phase = "cancel_window"
+		# Auto-resolve a buffered input as soon as the cancel opens.
+		if _queued_attack:
+			_start_attack_chunk(_combo_index + 1)
+			return
+	if _attack_phase_timer >= ATTACK_CHUNK_DURATION:
+		_attack_phase = "neutral"
+		_attack_phase_timer = 0.0
+		_combo_index = 0
+
 func _perform_attack() -> void:
+	# Once GLTF rigs land, replace this with
+	#   anim_tree.travel("attack_chunk_%d" % _combo_index)
 	if animation_player.has_animation("attack"):
 		animation_player.play("attack")
 
