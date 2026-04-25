@@ -1,47 +1,21 @@
 # Pixel Grinder
 
-A 2D top-down pixel grinding MMORPG inspired by Black Desert Online, built with Godot 4.
+A 3D action MMORPG built with Godot 4 — **BDO** combat density meets
+**Frieren** painterly aesthetic. Originally a 2D top-down pixel game,
+currently being migrated to 3D on the
+`claude/convert-2d-to-3d-game-Dt0C9` branch.
 
-## How to Run
+- See **[INSTALL.md](./INSTALL.md)** for installing Godot and running the project.
+- See **[3D_CONVERSION_PLAN.md](./3D_CONVERSION_PLAN.md)** for the 2D→3D migration plan and art direction.
 
-### Prerequisites
-
-- **Godot Engine 4.2+** — Download from [godotengine.org](https://godotengine.org/download)
-  - Use the **Standard** version (not .NET) since the project uses GDScript
-  - Any platform (Windows, macOS, Linux) works
-
-### Running from the Editor
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/santapong/MMORPG.git
-   cd MMORPG
-   ```
-
-2. Open Godot Engine
-
-3. Click **Import** and navigate to the `godot_project/` folder
-
-4. Select `project.godot` and click **Import & Edit**
-
-5. Press **F5** (or the Play button) to run the game
-
-### Running from Command Line
+## Quick Start
 
 ```bash
-# Run with Godot from the command line
-godot --path godot_project/
-
-# Or if Godot is not in your PATH, use the full path:
-/path/to/Godot_v4.2 --path godot_project/
+git clone https://github.com/santapong/MMORPG.git
+godot --path MMORPG/godot_project/
 ```
 
-### Exporting a Standalone Build
-
-1. In the Godot editor, go to **Project > Export**
-2. Add an export preset for your target platform (Windows, Linux, macOS, Web)
-3. Click **Export Project** and choose an output location
-4. Run the exported executable — no Godot installation needed
+Or open `godot_project/project.godot` in the Godot 4 editor and press **F5**.
 
 ## Controls
 
