@@ -5,9 +5,9 @@
 [application]
 
 config/name="Pixel Grinder"
-config/description="2D Top-Down Pixel Grinding Game inspired by Black Desert Online"
+config/description="3D Action MMORPG — BDO combat with Frieren painterly aesthetic"
 run/main_scene="res://scenes/main_menu/main_menu.tscn"
-config/features=PackedStringArray("4.2", "GL Compatibility")
+config/features=PackedStringArray("4.2", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
@@ -105,13 +105,13 @@ toggle_enhancement={
 
 [layer_names]
 
-2d_physics/layer_1="Player"
-2d_physics/layer_2="Enemies"
-2d_physics/layer_3="NPCs"
-2d_physics/layer_4="Walls"
-2d_physics/layer_5="Projectiles"
+3d_physics/layer_1="Player"
+3d_physics/layer_2="Enemies"
+3d_physics/layer_3="NPCs"
+3d_physics/layer_4="Walls"
+3d_physics/layer_5="Projectiles"
 
 [rendering]
 
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.mobile="mobile"
