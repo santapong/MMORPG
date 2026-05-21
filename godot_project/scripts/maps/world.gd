@@ -34,6 +34,7 @@ var world_map_node: CanvasLayer = null
 var waypoint_arrow_node: Control = null
 
 func _ready() -> void:
+	_spawn_zone_biomes()
 	_spawn_local_player()
 	if SPAWN_ENEMIES:
 		_spawn_zone_enemies()
@@ -67,6 +68,167 @@ func _pixel_to_world(p: Vector2) -> Vector3:
 	var center := Vector2(1000, 600)  # ZoneData spans roughly 0..2000, 0..1200
 	var local := p - center
 	return Vector3(local.x * WORLD_SCALE, 1.0, local.y * WORLD_SCALE)
+
+func _spawn_zone_biomes() -> void:
+	## Build one biome tile + prop set per zone defined in ZoneData.ZONES.
+	## Sits 2 cm above the global ground plane (which acts as the world void).
+	for zone_id in ZoneData.ZONES:
+		var zone: Dictionary = ZoneData.ZONES[zone_id]
+		var biome: Dictionary = ZoneData.get_zone_biome(zone_id)
+		if biome.is_empty():
+			continue
+		var bounds: Rect2 = zone.get("bounds", Rect2())
+		if bounds.size == Vector2.ZERO:
+			continue
+		_spawn_biome_tile(bounds, biome.get("ground_color", Color.GRAY))
+		_spawn_biome_props(
+			bounds,
+			biome.get("prop_type", "none"),
+			biome.get("prop_count", 0),
+			biome.get("prop_color", Color.WHITE),
+		)
+
+func _spawn_biome_tile(bounds: Rect2, color: Color) -> void:
+	var tile := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(bounds.size.x * WORLD_SCALE, bounds.size.y * WORLD_SCALE)
+	tile.mesh = plane
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = 0.95
+	mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+	mat.specular_mode = BaseMaterial3D.SPECULAR_TOON
+	tile.material_override = mat
+	var center := bounds.position + bounds.size * 0.5
+	var pos := _pixel_to_world(center)
+	pos.y = 0.02
+	tile.position = pos
+	ground.add_child(tile)
+
+func _spawn_biome_props(bounds: Rect2, prop_type: String, count: int, color: Color) -> void:
+	if prop_type == "none" or count <= 0:
+		return
+	var margin := 35.0
+	for i in count:
+		var px := Vector2(
+			randf_range(bounds.position.x + margin, bounds.end.x - margin),
+			randf_range(bounds.position.y + margin, bounds.end.y - margin)
+		)
+		var prop := _make_prop(prop_type, color)
+		if prop == null:
+			continue
+		var pos := _pixel_to_world(px)
+		pos.y = 0.05
+		prop.position = pos
+		prop.rotation.y = randf() * TAU
+		ground.add_child(prop)
+
+func _make_prop(prop_type: String, color: Color) -> Node3D:
+	## Build a primitive-mesh prop. No collision — decoration only.
+	## Sizes are in metres; visual-only, mobs and players can walk through.
+	var root := Node3D.new()
+	match prop_type:
+		"village":
+			# Tiny wooden hut: box body + cone roof.
+			var body := _mesh_child(BoxMesh.new(), color, Vector3(0, 0.5, 0))
+			(body.mesh as BoxMesh).size = Vector3(1.4, 1.0, 1.4)
+			root.add_child(body)
+			var roof := _mesh_child(CylinderMesh.new(), color.darkened(0.25), Vector3(0, 1.25, 0))
+			var rm := roof.mesh as CylinderMesh
+			rm.top_radius = 0.0
+			rm.bottom_radius = 1.1
+			rm.height = 0.6
+			root.add_child(roof)
+		"slime_pool":
+			# Flat translucent disc.
+			var disc := _mesh_child(CylinderMesh.new(), color, Vector3.ZERO)
+			var cm := disc.mesh as CylinderMesh
+			cm.top_radius = randf_range(0.6, 1.4)
+			cm.bottom_radius = cm.top_radius
+			cm.height = 0.08
+			(disc.material_override as StandardMaterial3D).transparency = (
+				BaseMaterial3D.TRANSPARENCY_ALPHA
+			)
+			var pc: Color = color
+			pc.a = 0.7
+			(disc.material_override as StandardMaterial3D).albedo_color = pc
+			root.add_child(disc)
+		"tree":
+			# Trunk + foliage sphere.
+			var trunk_h := randf_range(1.8, 2.6)
+			var trunk := _mesh_child(
+				CylinderMesh.new(), Color(0.30, 0.20, 0.12), Vector3(0, trunk_h * 0.5, 0)
+			)
+			var trm := trunk.mesh as CylinderMesh
+			trm.top_radius = 0.15
+			trm.bottom_radius = 0.18
+			trm.height = trunk_h
+			root.add_child(trunk)
+			var foliage := _mesh_child(
+				SphereMesh.new(), color, Vector3(0, trunk_h + 0.4, 0)
+			)
+			var sm := foliage.mesh as SphereMesh
+			sm.radius = randf_range(0.9, 1.3)
+			sm.height = sm.radius * 2.0
+			root.add_child(foliage)
+		"camp":
+			# Tent (cone) or crate (box), 50/50.
+			if randf() < 0.5:
+				var tent := _mesh_child(CylinderMesh.new(), color, Vector3(0, 0.6, 0))
+				var tm := tent.mesh as CylinderMesh
+				tm.top_radius = 0.0
+				tm.bottom_radius = 0.9
+				tm.height = 1.2
+				root.add_child(tent)
+			else:
+				var crate := _mesh_child(BoxMesh.new(), color, Vector3(0, 0.35, 0))
+				(crate.mesh as BoxMesh).size = Vector3(0.7, 0.7, 0.7)
+				root.add_child(crate)
+		"ruin":
+			# Broken pillar — tall thin box, randomly tilted.
+			var h := randf_range(1.8, 3.2)
+			var pillar := _mesh_child(BoxMesh.new(), color, Vector3(0, h * 0.5, 0))
+			(pillar.mesh as BoxMesh).size = Vector3(0.5, h, 0.5)
+			pillar.rotation = Vector3(
+				randf_range(-0.25, 0.25), 0.0, randf_range(-0.25, 0.25)
+			)
+			root.add_child(pillar)
+		"lava":
+			# Glowing lava patch — emissive disc with a jagged spike.
+			var patch := _mesh_child(CylinderMesh.new(), color, Vector3(0, 0.02, 0))
+			var lm := patch.mesh as CylinderMesh
+			lm.top_radius = randf_range(0.7, 1.4)
+			lm.bottom_radius = lm.top_radius
+			lm.height = 0.04
+			var pmat := patch.material_override as StandardMaterial3D
+			pmat.emission_enabled = true
+			pmat.emission = color
+			pmat.emission_energy_multiplier = 1.4
+			root.add_child(patch)
+			if randf() < 0.6:
+				var spike := _mesh_child(
+					CylinderMesh.new(), Color(0.18, 0.08, 0.08), Vector3(0, 0.45, 0)
+				)
+				var spm := spike.mesh as CylinderMesh
+				spm.top_radius = 0.0
+				spm.bottom_radius = 0.35
+				spm.height = 0.9
+				root.add_child(spike)
+		_:
+			return null
+	return root
+
+func _mesh_child(mesh: Mesh, color: Color, local_pos: Vector3) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	node.mesh = mesh
+	node.position = local_pos
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = 0.85
+	mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+	mat.specular_mode = BaseMaterial3D.SPECULAR_TOON
+	node.material_override = mat
+	return node
 
 func _spawn_local_player() -> void:
 	local_player = PlayerScene.instantiate() as Player
