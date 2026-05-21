@@ -4,6 +4,35 @@ All notable changes to the Pixel Grinder MMORPG project.
 
 ---
 
+## [0.6.0] - 2026-05-21
+
+### Added — 3D Biome Pass (per-zone visual identity)
+- **ZONE_BIOMES** data table in `scripts/zones/zone_data.gd` — ground color,
+  prop type, prop count, and prop color per zone
+- **Per-zone ground tiles** built at runtime from `ZoneData.ZONES.bounds` —
+  six distinct colored planes overlaid on the global void ground
+- **Biome props** spawned per zone — primitive-mesh decorations, no external
+  assets required:
+  - Starter Village: wooden huts (box body + cone roof)
+  - Slime Fields: translucent green slime pools
+  - Wolf Forest: trees (trunk + foliage sphere)
+  - Bandit Camp: tents and crates
+  - Cursed Ruins: tilted broken pillars
+  - Demon Rift: emissive lava patches + jagged rocks
+- Global ground tone darkened to make zone tiles pop
+- Toon diffuse/specular materials on biome tiles + props for Frieren cel-shade
+  continuity
+
+### Added — AI Content Authoring Guide
+- `docs/CONTENT_AUTHORING.md` — schema cheatsheets, tier-balance reference
+  tables, ability-type catalog, drop-in prompts for Claude / AI agents to
+  author new mobs, zones, abilities, and prop types
+
+### New Files
+- `docs/CONTENT_AUTHORING.md` — AI-assisted content authoring guide
+
+---
+
 ## [0.5.1] - 2026-03-16
 
 ### Changed — Roadmap & Planning

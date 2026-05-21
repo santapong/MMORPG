@@ -215,6 +215,49 @@ const MOB_DROPS := {
 	],
 }
 
+## Per-zone 3D biome data: ground color + decoration prop type and density.
+## Palette follows the Frieren direction from 3D_CONVERSION_PLAN.md §2.
+## Prop types are interpreted by world.gd._make_prop() — primitive meshes,
+## no external assets required.
+const ZONE_BIOMES := {
+	"starter_village": {
+		"ground_color": Color(0.72, 0.62, 0.46),   # warm beaten path / village square
+		"prop_type": "village",
+		"prop_count": 6,
+		"prop_color": Color(0.66, 0.52, 0.38),
+	},
+	"slime_fields": {
+		"ground_color": Color(0.65, 0.82, 0.45),   # bright meadow
+		"prop_type": "slime_pool",
+		"prop_count": 8,
+		"prop_color": Color(0.35, 0.85, 0.40),
+	},
+	"wolf_forest": {
+		"ground_color": Color(0.31, 0.42, 0.29),   # deep moss
+		"prop_type": "tree",
+		"prop_count": 14,
+		"prop_color": Color(0.20, 0.35, 0.18),
+	},
+	"bandit_camp": {
+		"ground_color": Color(0.62, 0.55, 0.42),   # dry trampled earth
+		"prop_type": "camp",
+		"prop_count": 10,
+		"prop_color": Color(0.45, 0.30, 0.20),
+	},
+	"cursed_ruins": {
+		"ground_color": Color(0.42, 0.40, 0.46),   # weathered stone w/ violet tint
+		"prop_type": "ruin",
+		"prop_count": 12,
+		"prop_color": Color(0.72, 0.68, 0.74),
+	},
+	"demon_rift": {
+		"ground_color": Color(0.22, 0.12, 0.12),   # volcanic black
+		"prop_type": "lava",
+		"prop_count": 11,
+		"prop_color": Color(1.0, 0.45, 0.15),
+	},
+}
+
 static func get_mob_stats(mob_id: String) -> Dictionary:
 	return MOB_STATS.get(mob_id, {})
 
@@ -224,6 +267,9 @@ static func get_mob_drops(mob_id: String) -> Array:
 
 static func get_zone(zone_id: String) -> Dictionary:
 	return ZONES.get(zone_id, {})
+
+static func get_zone_biome(zone_id: String) -> Dictionary:
+	return ZONE_BIOMES.get(zone_id, {})
 
 static func get_zone_at_position(pos: Vector2) -> String:
 	for zone_id in ZONES:

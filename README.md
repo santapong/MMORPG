@@ -7,6 +7,7 @@ currently being migrated to 3D on the
 
 - See **[INSTALL.md](./INSTALL.md)** for installing Godot and running the project.
 - See **[3D_CONVERSION_PLAN.md](./3D_CONVERSION_PLAN.md)** for the 2D→3D migration plan and art direction.
+- See **[docs/CONTENT_AUTHORING.md](./docs/CONTENT_AUTHORING.md)** for adding new mobs, zones, and biomes (with AI-assisted prompts).
 
 ## Quick Start
 
