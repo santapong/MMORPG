@@ -498,10 +498,10 @@ const EQUIPMENT := {
 
 ## Get equipment entry by ID
 static func get_equipment(equip_id: String) -> Dictionary:
-	var equip := EQUIPMENT.get(equip_id, {})
+	var equip = EQUIPMENT.get(equip_id, {})
 	if equip.is_empty():
 		return {}
-	var result := equip.duplicate(true)
+	var result = equip.duplicate(true)
 	result["id"] = equip_id
 	return result
 
@@ -511,7 +511,7 @@ static func get_equipment_for_slot(slot: String) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for equip_id in EQUIPMENT:
 		if EQUIPMENT[equip_id]["slot"] == slot:
-			var entry := EQUIPMENT[equip_id].duplicate(true)
+			var entry = EQUIPMENT[equip_id].duplicate(true)
 			entry["id"] = equip_id
 			result.append(entry)
 	result.sort_custom(func(a, b): return a["level_req"] < b["level_req"])
@@ -536,7 +536,7 @@ static func get_available_equipment(player_level: int, class_type: ClassData.Cla
 
 ## Check if a player can equip an item
 static func can_equip(equip_id: String, player_level: int, class_type: ClassData.ClassType) -> Dictionary:
-	var equip := EQUIPMENT.get(equip_id, {})
+	var equip = EQUIPMENT.get(equip_id, {})
 	if equip.is_empty():
 		return {"can_equip": false, "reason": "Equipment not found"}
 
@@ -555,7 +555,7 @@ static func can_equip(equip_id: String, player_level: int, class_type: ClassData
 
 ## Get the effective stats of equipment considering grade multiplier
 static func get_effective_stats(equip_id: String) -> Dictionary:
-	var equip := EQUIPMENT.get(equip_id, {})
+	var equip = EQUIPMENT.get(equip_id, {})
 	if equip.is_empty():
 		return {}
 	var grade: Grade = equip.get("grade", Grade.COMMON)

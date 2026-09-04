@@ -117,7 +117,7 @@ func equip_item(item: Dictionary) -> Dictionary:
 	if class_req.size() > 0 and GameManager.player_class not in class_req:
 		return {}
 
-	var previous := equipped.get(slot, {})
+	var previous = equipped.get(slot, {})
 	equipped[slot] = item.duplicate(true)
 	if not equipped[slot].has("enhance_level"):
 		equipped[slot]["enhance_level"] = 0
@@ -131,7 +131,7 @@ func equip_item(item: Dictionary) -> Dictionary:
 func unequip_item(slot: String) -> Dictionary:
 	if not equipped.has(slot):
 		return {}
-	var item := equipped[slot]
+	var item = equipped[slot]
 	equipped.erase(slot)
 	_recalculate_stats()
 	equipment_changed.emit(slot)

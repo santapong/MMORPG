@@ -461,7 +461,7 @@ func _do_teleport() -> void:
 	dir.y = 0
 	dir = dir.normalized()
 	var dist := _ground_distance(global_position, target.global_position)
-	var tp_dist := min(dist - attack_range, tp_range)
+	var tp_dist = min(dist - attack_range, tp_range)
 	global_position += dir * tp_dist * WORLD_SCALE
 	visible = false
 	get_tree().create_timer(0.1).timeout.connect(

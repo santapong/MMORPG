@@ -91,9 +91,9 @@ func _on_draw() -> void:
 	for npc in npcs:
 		if not is_instance_valid(npc):
 			continue
-		var offset := (npc.global_position - player_pos) * MINIMAP_SCALE
+		var offset = (npc.global_position - player_pos) * MINIMAP_SCALE
 		if offset.length() < center.x:
-			var dot_pos := center + offset
+			var dot_pos = center + offset
 			draw_surface.draw_circle(dot_pos, NPC_DOT_SIZE, Color(0.2, 0.9, 0.9))
 
 	# Draw enemies (red dots)
@@ -101,9 +101,9 @@ func _on_draw() -> void:
 	for enemy in enemies:
 		if not is_instance_valid(enemy) or not enemy.visible:
 			continue
-		var offset := (enemy.global_position - player_pos) * MINIMAP_SCALE
+		var offset = (enemy.global_position - player_pos) * MINIMAP_SCALE
 		if offset.length() < center.x:
-			var dot_pos := center + offset
+			var dot_pos = center + offset
 			draw_surface.draw_circle(dot_pos, ENEMY_DOT_SIZE, Color(1, 0.3, 0.3, 0.7))
 
 	# Draw other players (blue dots)
@@ -111,9 +111,9 @@ func _on_draw() -> void:
 	for p in players:
 		if not is_instance_valid(p) or p == player_ref:
 			continue
-		var offset := (p.global_position - player_pos) * MINIMAP_SCALE
+		var offset = (p.global_position - player_pos) * MINIMAP_SCALE
 		if offset.length() < center.x:
-			var dot_pos := center + offset
+			var dot_pos = center + offset
 			draw_surface.draw_circle(dot_pos, PLAYER_DOT_SIZE, Color(0.3, 0.5, 1.0))
 
 	# Draw player (white dot in center, always)

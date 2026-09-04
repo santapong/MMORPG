@@ -329,7 +329,7 @@ func _build_stats_text(item: Dictionary, slot: String, current_level: int, next_
 			continue
 		var label: String = stat_names[stat_key]
 		if stat_key == "crit_chance":
-			var delta := next_val - curr_val
+			var delta = next_val - curr_val
 			var delta_str := ""
 			if current_level != next_level:
 				if delta > 0:

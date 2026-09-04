@@ -128,7 +128,7 @@ func _on_draw() -> void:
 	var surface_size := draw_surface.size
 	var scale_x := surface_size.x / WORLD_SIZE.x
 	var scale_y := surface_size.y / WORLD_SIZE.y
-	var draw_scale := min(scale_x, scale_y)
+	var draw_scale = min(scale_x, scale_y)
 
 	# Background
 	draw_surface.draw_rect(Rect2(Vector2.ZERO, surface_size), Color(0.05, 0.05, 0.08))
@@ -184,7 +184,7 @@ func _on_draw() -> void:
 	for npc in npcs:
 		if not is_instance_valid(npc):
 			continue
-		var npc_pos := npc.global_position * draw_scale
+		var npc_pos = npc.global_position * draw_scale
 		draw_surface.draw_circle(npc_pos, 5, Color(0.2, 0.9, 0.9))
 
 		# NPC name
@@ -194,7 +194,7 @@ func _on_draw() -> void:
 	# Draw waypoint
 	if GameManager.has_meta("waypoint"):
 		var wp: Vector2 = GameManager.get_meta("waypoint")
-		var wp_screen := wp * draw_scale
+		var wp_screen = wp * draw_scale
 		var pulse := (sin(Time.get_ticks_msec() / 250.0) + 1.0) / 2.0
 		var wp_size := 6.0 + pulse * 3.0
 		draw_surface.draw_circle(wp_screen, wp_size, Color(1, 0.85, 0.0, 0.7))
@@ -205,26 +205,26 @@ func _on_draw() -> void:
 
 	# Draw player
 	if player_ref and is_instance_valid(player_ref):
-		var p_pos := player_ref.global_position * draw_scale
+		var p_pos = player_ref.global_position * draw_scale
 		draw_surface.draw_circle(p_pos, 6, Color.WHITE)
 		# Arrow showing facing direction
-		var facing := player_ref.facing_direction.normalized()
+		var facing = player_ref.facing_direction.normalized()
 		if facing != Vector2.ZERO:
 			draw_surface.draw_line(p_pos, p_pos + facing * 12, Color.WHITE, 2.0)
 
 	# Draw grid
 	for x in range(0, int(WORLD_SIZE.x), 200):
-		var lx := x * draw_scale
+		var lx = x * draw_scale
 		draw_surface.draw_line(Vector2(lx, 0), Vector2(lx, surface_size.y), Color(0.3, 0.3, 0.3, 0.15))
 	for y in range(0, int(WORLD_SIZE.y), 200):
-		var ly := y * draw_scale
+		var ly = y * draw_scale
 		draw_surface.draw_line(Vector2(0, ly), Vector2(surface_size.x, ly), Color(0.3, 0.3, 0.3, 0.15))
 
 func _on_map_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var surface_size := draw_surface.size
-		var draw_scale := min(surface_size.x / WORLD_SIZE.x, surface_size.y / WORLD_SIZE.y)
-		var world_pos := event.position / draw_scale
+		var draw_scale = min(surface_size.x / WORLD_SIZE.x, surface_size.y / WORLD_SIZE.y)
+		var world_pos = event.position / draw_scale
 
 		# Set waypoint
 		GameManager.set_meta("waypoint", world_pos)
