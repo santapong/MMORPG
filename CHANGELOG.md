@@ -4,6 +4,29 @@ All notable changes to the Pixel Grinder MMORPG project.
 
 ---
 
+## [0.6.0] - 2026-09-05
+
+### Added — Offline Vertical Slice
+
+- Added **The Slime Crown** quest: accept, hunt five slimes, collect guaranteed
+  equipment supplies, equip and enhance a weapon, defeat the Slime King, and
+  return for a completion reward.
+- Added a persistent objective card, a marked boss arena, and one
+  non-respawning Slime King encounter.
+- Added quest-state persistence to character saves.
+- Added a headless integration smoke test for the complete quest, inventory,
+  enhancement, boss, reward, and save/reload sequence.
+
+### Fixed
+
+- Fixed Godot 4.7 Variant-inference parser failures across seven scripts.
+- Fixed inventory equipment use duplicating items instead of equipping them.
+- Fixed loaded characters losing level, stats, and skills on game start.
+- Fixed fresh characters restoring to an incorrect world position.
+- Fixed enemy and NPC spawn ordering errors exposed by Godot 4.7.
+
+---
+
 ## [0.5.1] - 2026-03-16
 
 ### Changed — Roadmap & Planning

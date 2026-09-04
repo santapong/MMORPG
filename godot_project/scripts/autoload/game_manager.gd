@@ -48,6 +48,13 @@ var skill_levels: Dictionary = {} # skill_id -> level (1-5)
 var is_in_game: bool = false
 var current_map: String = ""
 
+# Bounded offline-demo progression. Kept in global state so it survives scene
+# changes and can be serialized with the character save.
+var slice_state: Dictionary = {
+	"stage": "offer",
+	"slimes_defeated": 0,
+}
+
 # Active buffs from skills
 var active_buffs: Array[Dictionary] = [] # [{type, value, remaining_time}]
 
@@ -253,6 +260,7 @@ func reset_state() -> void:
 	total_skill_points_earned = 0
 	skill_levels = {}
 	active_buffs.clear()
+	slice_state = {"stage": "offer", "slimes_defeated": 0}
 	_reset_passives()
 	player_stats = {
 		"level": 1, "hp": 100, "max_hp": 100, "mp": 50, "max_mp": 50,

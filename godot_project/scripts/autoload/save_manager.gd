@@ -155,6 +155,7 @@ func _serialize_game_state() -> Dictionary:
 	data["skill_points"] = GameManager.skill_points
 	data["total_skill_points_earned"] = GameManager.total_skill_points_earned
 	data["skill_levels"] = GameManager.skill_levels.duplicate(true)
+	data["slice_state"] = GameManager.slice_state.duplicate(true)
 
 	# Silver
 	data["silver"] = SilverManager.silver
@@ -189,7 +190,8 @@ func _serialize_game_state() -> Dictionary:
 	if player:
 		data["position"] = {"x": player.global_position.x, "y": player.global_position.z}
 	else:
-		data["position"] = {"x": 0, "y": 0}
+		# World spawn converted from legacy pixel position (300, 300).
+		data["position"] = {"x": -23.333333, "y": -10.0}
 
 	return data
 
@@ -208,6 +210,7 @@ func _deserialize_game_state(data: Dictionary) -> void:
 	GameManager.skill_points = data.get("skill_points", 0)
 	GameManager.total_skill_points_earned = data.get("total_skill_points_earned", 0)
 	GameManager.skill_levels = data.get("skill_levels", {})
+	GameManager.slice_state = data.get("slice_state", {"stage": "offer", "slimes_defeated": 0}).duplicate(true)
 	GameManager._apply_all_passives()
 
 	# Silver
@@ -227,7 +230,7 @@ var _pending_failstacks: int = 0
 var _pending_equipped: Dictionary = {}
 var _pending_inventory: Array = []
 var _pending_history: Array = []
-var _pending_position: Dictionary = {"x": 300, "y": 300}
+var _pending_position: Dictionary = {"x": -23.333333, "y": -10.0}
 
 ## Call this after world scene is loaded to restore equipment, inventory, and position
 func apply_pending_state() -> void:

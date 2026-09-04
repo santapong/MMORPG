@@ -349,7 +349,10 @@ func _update_class_selection() -> void:
 			btn.modulate = Color(0.6, 0.6, 0.6)
 
 func _start_with_class(username: String) -> void:
-	GameManager.select_class(selected_class)
+	# A loaded slot already owns its class and progression. Re-selecting the class
+	# here used to reset its level, stats, and skill state immediately before play.
+	if selected_slot < 0 or not SaveManager.has_save(selected_slot):
+		GameManager.select_class(selected_class)
 	GameManager.player_name = username
 	# Save before entering world
 	if selected_slot >= 0:

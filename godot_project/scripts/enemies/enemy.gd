@@ -15,6 +15,7 @@ const WORLD_SCALE: float = 1.0 / 30.0
 @export var detection_range: float = 200.0  # px (legacy)
 @export var attack_range: float = 30.0      # px (legacy)
 @export var exp_reward: int = 25
+@export var respawns: bool = true
 
 @onready var mesh: MeshInstance3D = $Mesh
 @onready var hp_label: Label3D = $HPLabel
@@ -66,6 +67,7 @@ const MOB_COLORS := {
 	"demon_soldier": Color(0.8, 0.1, 0.1),
 	"hellhound": Color(1.0, 0.3, 0.0),
 	"demon_lord": Color(0.6, 0.0, 0.0),
+	"slime_king": Color(0.65, 0.95, 0.2),
 }
 
 func _ready() -> void:
@@ -245,6 +247,7 @@ func _die(killer_id: int) -> void:
 		_do_split()
 
 	EventBus.entity_died.emit(get_instance_id())
+	EventBus.mob_defeated.emit(mob_id, get_instance_id())
 	GameManager.add_exp(exp_reward)
 
 	if silver_per_kill > 0:
@@ -273,6 +276,10 @@ func _die(killer_id: int) -> void:
 
 	visible = false
 	set_physics_process(false)
+	if not respawns:
+		await get_tree().create_timer(0.6).timeout
+		queue_free()
+		return
 	await get_tree().create_timer(respawn_time).timeout
 	_respawn()
 

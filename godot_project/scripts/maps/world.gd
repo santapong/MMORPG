@@ -15,6 +15,7 @@ const SPAWN_ENEMIES: bool = true
 const SPAWN_NPCS: bool = true
 const ENABLE_DAMAGE_NUMBERS: bool = true
 const ENABLE_WORLD_POSITION_UI: bool = false
+const VERTICAL_SLICE_MODE: bool = true
 
 @onready var entities: Node3D = $Entities
 @onready var ui_layer: CanvasLayer = $UILayer
@@ -32,6 +33,7 @@ var damage_numbers_node: Node3D = null
 var minimap_node: PanelContainer = null
 var world_map_node: CanvasLayer = null
 var waypoint_arrow_node: Control = null
+var vertical_slice_node: PanelContainer = null
 
 func _ready() -> void:
 	_spawn_local_player()
@@ -40,6 +42,7 @@ func _ready() -> void:
 	if SPAWN_NPCS:
 		_spawn_npcs()
 	_setup_grinding_ui()
+	_setup_vertical_slice()
 
 	EventBus.player_joined.connect(_on_player_joined)
 	EventBus.player_left.connect(_on_player_left)
@@ -72,12 +75,14 @@ func _spawn_local_player() -> void:
 	local_player = PlayerScene.instantiate() as Player
 	local_player.is_local = true
 	local_player.player_peer_id = GameManager.player_id
-	local_player.global_position = _pixel_to_world(Vector2(300, 300))
+	local_player.position = _pixel_to_world(Vector2(300, 300))
 	entities.add_child(local_player)
 
 func _spawn_zone_enemies() -> void:
 	## Spawn enemies based on zone data — BDO-style mob density per zone.
 	for zone_id in ZoneData.ZONES:
+		if VERTICAL_SLICE_MODE and zone_id != "slime_fields":
+			continue
 		var zone: Dictionary = ZoneData.ZONES[zone_id]
 		var mobs: Array = zone.get("mobs", [])
 		var mob_count: int = zone.get("mob_count", 0)
@@ -115,9 +120,8 @@ func _spawn_zone_enemies() -> void:
 				randf_range(bounds.position.y + margin, bounds.end.y - margin)
 			)
 			var pos := _pixel_to_world(px)
-			enemy.global_position = pos
+			enemy.position = pos
 			enemy.spawn_position = pos
-			enemy.nametag.text = mob_name
 			entities.add_child(enemy)
 
 func _spawn_npcs() -> void:
@@ -162,8 +166,10 @@ func _spawn_npcs() -> void:
 	for data in npc_data:
 		var npc := NPCScene.instantiate() as NPC
 		npc.npc_name = data["name"]
-		npc.global_position = _pixel_to_world(data["pos"])
-		npc.dialog_lines = data["dialog"]
+		npc.position = _pixel_to_world(data["pos"])
+		var dialog: Array[String] = []
+		dialog.assign(data["dialog"])
+		npc.dialog_lines = dialog
 		npc.is_shopkeeper = data.get("is_shop", false)
 		entities.add_child(npc)
 
@@ -187,7 +193,9 @@ func _setup_grinding_ui() -> void:
 	if local_player and local_player.get_equipment_system():
 		var inv_panel := _find_inventory_panel()
 		if inv_panel and inv_panel.inventory:
-			local_player.get_equipment_system().setup_inventory(inv_panel.inventory)
+			var equipment_system := local_player.get_equipment_system()
+			equipment_system.setup_inventory(inv_panel.inventory)
+			inv_panel.inventory.set_equipment_system(equipment_system)
 		enhancement_panel_node.setup(local_player.get_equipment_system())
 
 	var ComparisonScript := preload("res://scripts/ui/equipment_comparison_panel.gd")
@@ -230,6 +238,52 @@ func _setup_grinding_ui() -> void:
 	waypoint_arrow_node.anchor_bottom = 1.0
 	ui_layer.add_child(waypoint_arrow_node)
 	waypoint_arrow_node.setup(local_player)
+
+func _setup_vertical_slice() -> void:
+	var SliceScript := preload("res://scripts/quests/vertical_slice.gd")
+	vertical_slice_node = PanelContainer.new()
+	vertical_slice_node.set_script(SliceScript)
+	ui_layer.add_child(vertical_slice_node)
+	vertical_slice_node.setup(self)
+
+func spawn_slice_boss() -> void:
+	if not get_tree().get_nodes_in_group("slice_boss").is_empty():
+		return
+
+	var arena := MeshInstance3D.new()
+	arena.name = "SlimeKingArena"
+	var arena_mesh := CylinderMesh.new()
+	arena_mesh.top_radius = 4.5
+	arena_mesh.bottom_radius = 4.5
+	arena_mesh.height = 0.04
+	var arena_material := StandardMaterial3D.new()
+	arena_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	arena_material.albedo_color = Color(0.55, 0.9, 0.2, 0.2)
+	arena_material.emission_enabled = true
+	arena_material.emission = Color(0.3, 0.65, 0.1)
+	arena_material.emission_energy_multiplier = 0.35
+	arena_mesh.material = arena_material
+	arena.mesh = arena_mesh
+	arena.position = _pixel_to_world(Vector2(900, 300)) + Vector3(0, 0.03, 0)
+	ground.add_child(arena)
+
+	var boss := EnemyScene.instantiate() as Enemy
+	boss.enemy_name = "Slime King"
+	boss.mob_id = "slime_king"
+	boss.max_hp = 260
+	boss.attack_power = 9
+	boss.defense = 2
+	boss.move_speed = 32.0
+	boss.detection_range = 260.0
+	boss.attack_range = 40.0
+	boss.exp_reward = 160
+	boss.silver_per_kill = 800
+	boss.respawns = false
+	boss.position = _pixel_to_world(Vector2(900, 300))
+	boss.spawn_position = boss.position
+	boss.scale = Vector3.ONE * 1.8
+	entities.add_child(boss)
+	boss.add_to_group("slice_boss")
 
 func _on_player_joined(peer_id: int, player_name: String) -> void:
 	if peer_id == GameManager.player_id:

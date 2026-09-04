@@ -2,6 +2,13 @@
 
 > Gameplay-first development. Every phase should make the game more fun to play.
 
+## Current release: v0.6 offline vertical slice
+
+The active finish line is the bounded Warrior quest in
+[`VERTICAL_SLICE_PLAN.md`](./VERTICAL_SLICE_PLAN.md). Multi-currency and MMO
+expansion remain future ideas until this offline loop is manually played and
+released.
+
 ---
 
 ## Completed

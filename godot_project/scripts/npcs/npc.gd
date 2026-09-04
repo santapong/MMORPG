@@ -20,6 +20,7 @@ func _ready() -> void:
 	interact_hint.visible = false
 
 func interact() -> void:
+	EventBus.npc_interacted.emit(npc_name)
 	if is_shopkeeper:
 		_open_shop()
 	else:

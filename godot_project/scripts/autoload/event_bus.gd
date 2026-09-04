@@ -16,6 +16,7 @@ signal class_selected(class_type: ClassData.ClassType)
 # Combat events
 signal damage_dealt(attacker_id: int, target_id: int, amount: int)
 signal entity_died(entity_id: int)
+signal mob_defeated(mob_id: String, entity_id: int)
 signal critical_hit(position: Vector3, amount: int)
 
 # Skill events
@@ -34,6 +35,7 @@ signal inventory_updated()
 # NPC events
 signal npc_interaction_started(npc_id: int, npc_name: String)
 signal npc_interaction_ended(npc_id: int)
+signal npc_interacted(npc_name: String)
 signal quest_accepted(quest_id: int)
 signal quest_completed(quest_id: int)
 

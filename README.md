@@ -1,12 +1,26 @@
 # Pixel Grinder
 
-A 3D action MMORPG built with Godot 4 — **BDO** combat density meets
-**Frieren** painterly aesthetic. Originally a 2D top-down pixel game,
-currently being migrated to 3D on the
-`claude/convert-2d-to-3d-game-Dt0C9` branch.
+A 3D action RPG prototype built with Godot 4 — **BDO** combat density meets
+**Frieren** painterly aesthetic. The 2D-to-3D conversion is merged, and the
+current playable target is a bounded offline vertical slice.
 
 - See **[INSTALL.md](./INSTALL.md)** for installing Godot and running the project.
 - See **[3D_CONVERSION_PLAN.md](./3D_CONVERSION_PLAN.md)** for the 2D→3D migration plan and art direction.
+- See **[VERTICAL_SLICE_PLAN.md](./VERTICAL_SLICE_PLAN.md)** for the current finish line and acceptance checks.
+
+## Playable slice: The Slime Crown
+
+Create a Warrior, start single-player, and follow the objective card:
+
+1. Talk to Elder Gorn in Starter Village.
+2. Defeat five slimes in Slime Fields.
+3. Open the inventory and equip the rewarded Wooden Sword.
+4. Enhance it to +1 with the supplied Black Stones and silver.
+5. Defeat the Slime King in the glowing arena and return to Elder Gorn.
+
+Quest state, inventory, equipment, enhancement, and completion persist with the
+character save. This slice intentionally keeps networking and the broader MMO
+roadmap out of the critical path.
 
 ## Quick Start
 
@@ -16,6 +30,14 @@ godot --path MMORPG/godot_project/
 ```
 
 Or open `godot_project/project.godot` in the Godot 4 editor and press **F5**.
+
+Validate the full quest state machine without touching real saves:
+
+```bash
+mkdir -p /tmp/pixel-grinder-smoke-data
+XDG_DATA_HOME=/tmp/pixel-grinder-smoke-data godot --headless \
+  --path godot_project res://tests/vertical_slice_smoke.tscn
+```
 
 ## Controls
 
@@ -30,6 +52,8 @@ Or open `godot_project/project.godot` in the Godot 4 editor and press **F5**.
 | `M` | Toggle World Map |
 | `1` `2` `3` `4` | Activate Skills |
 | `Enter` | Focus Chat |
+
+The objective card in the upper-right always shows the next slice action.
 
 ## Game Overview
 

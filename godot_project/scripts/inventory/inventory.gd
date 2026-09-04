@@ -7,14 +7,19 @@ signal inventory_changed()
 const MAX_SLOTS: int = 20
 
 var items: Array[Dictionary] = []
+var equipment_system: EquipmentSystem = null
 
 func _ready() -> void:
+	add_to_group("inventory")
 	# Initialize empty slots
 	items.resize(MAX_SLOTS)
 	for i in MAX_SLOTS:
 		items[i] = {}
 
 	EventBus.item_picked_up.connect(add_item)
+
+func set_equipment_system(system: EquipmentSystem) -> void:
+	equipment_system = system
 
 func add_item(item_data: Dictionary) -> bool:
 	if item_data.is_empty():
@@ -100,9 +105,17 @@ func _use_consumable(item: Dictionary) -> void:
 	EventBus.item_used.emit(item)
 
 func _equip_item(item: Dictionary, slot_index: int) -> void:
-	# Emit event so the UI layer can show the comparison panel
-	EventBus.item_picked_up.emit(item) # Re-emit as equipment pickup for comparison
+	if equipment_system == null:
+		return
+	var slot: String = item.get("slot", "")
+	var previous := equipment_system.get_equipped(slot).duplicate(true)
+	equipment_system.equip_item(item)
+	var equipped := equipment_system.get_equipped(slot)
+	if equipped.get("id", "") != item.get("id", ""):
+		return
 	remove_item(slot_index)
+	if not previous.is_empty():
+		add_item(previous)
 
 func get_item(slot_index: int) -> Dictionary:
 	if slot_index < 0 or slot_index >= MAX_SLOTS:
