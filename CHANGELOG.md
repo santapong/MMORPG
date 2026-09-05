@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.7.0 - Combat Progression
+
+- Added distinct Warrior, Mage, and Ranger basic attacks, combo scaling, and
+  stamina-backed dodge movement.
+- Made all twelve class skills operational with movement and status effects.
+- Added a Crowned Slime elite plus offensive, defensive, and mobility loot traits.
+- Made The Slime Crown reward, equipment, enhancement, and save flow work for
+  all three classes.
+- Added a stamina HUD and three-class headless acceptance coverage.
+
 All notable changes to the Pixel Grinder MMORPG project.
 
 ---

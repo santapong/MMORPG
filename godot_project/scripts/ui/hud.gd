@@ -10,11 +10,13 @@ class_name HUD
 @onready var mp_label: Label = $MarginContainer/VBoxContainer/MPBar/MPLabel
 @onready var silver_label: Label = $MarginContainer/VBoxContainer/SilverLabel
 @onready var class_label: Label = $MarginContainer/VBoxContainer/ClassLabel
+@onready var stamina_bar: ProgressBar = $MarginContainer/VBoxContainer/StaminaBar
 
 func _ready() -> void:
 	EventBus.player_health_changed.connect(_on_health_changed)
 	EventBus.player_mana_changed.connect(_on_mana_changed)
 	EventBus.player_exp_changed.connect(_on_exp_changed)
+	EventBus.player_stamina_changed.connect(_on_stamina_changed)
 	EventBus.player_level_up.connect(_on_level_up)
 	SilverManager.silver_changed.connect(_on_silver_changed)
 	_refresh()
@@ -62,3 +64,7 @@ func _on_level_up(_player_id: int, new_level: int) -> void:
 
 func _on_silver_changed(amount: int) -> void:
 	_update_silver(amount)
+
+func _on_stamina_changed(_player_id: int, current: float, maximum: float) -> void:
+	stamina_bar.max_value = maximum
+	stamina_bar.value = current

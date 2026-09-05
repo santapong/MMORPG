@@ -123,6 +123,8 @@ func _spawn_zone_enemies() -> void:
 			enemy.position = pos
 			enemy.spawn_position = pos
 			entities.add_child(enemy)
+			if i == 0:
+				enemy.call_deferred("make_elite")
 
 func _spawn_npcs() -> void:
 	var npc_data := [

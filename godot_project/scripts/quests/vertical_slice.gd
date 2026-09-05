@@ -3,6 +3,8 @@ class_name VerticalSlice
 ## A complete offline demo loop: accept, hunt, loot, equip, enhance, defeat
 ## the Slime King, and return to Elder Gorn.
 
+const CombatProfiles := preload("res://scripts/combat/combat_profile.gd")
+
 const QUEST_ID: int = 1
 const SLIME_TARGET: int = 5
 
@@ -75,7 +77,8 @@ func _refresh() -> void:
 			objective_label.text = "Hunt slimes east of the village."
 			progress_label.text = "%d / %d slimes defeated" % [defeated, SLIME_TARGET]
 		"equip":
-			objective_label.text = "Open Inventory [I] and click the Wooden Sword."
+			var weapon := EquipmentData.get_equipment(CombatProfiles.quest_weapon_id(GameManager.player_class))
+			objective_label.text = "Open Inventory [I] and equip the %s." % weapon.get("name", "quest weapon")
 			progress_label.text = "Equip your quest loot."
 		"enhance":
 			objective_label.text = "Open Enhancement [P] and improve the weapon."
@@ -118,7 +121,8 @@ func _grant_hunt_reward() -> void:
 	var inventory := _inventory()
 	if inventory == null:
 		return
-	var weapon := EquipmentData.get_equipment("wooden_sword")
+	var weapon := EquipmentData.get_equipment(CombatProfiles.quest_weapon_id(GameManager.player_class))
+	weapon = CombatProfiles.apply_loot_trait(weapon, _class_loot_trait())
 	weapon["type"] = "equipment"
 	weapon["stackable"] = false
 	inventory.add_item(weapon)
@@ -131,6 +135,13 @@ func _grant_hunt_reward() -> void:
 	})
 	SilverManager.add_silver(3500, "quest_supply")
 	_set_stage("equip")
+
+func _class_loot_trait() -> String:
+	match GameManager.player_class:
+		ClassData.ClassType.WARRIOR: return "defense"
+		ClassData.ClassType.MAGE: return "offense"
+		ClassData.ClassType.RANGER: return "mobility"
+	return "offense"
 
 func _on_equipment_equipped(slot: String, _item: Dictionary) -> void:
 	if _stage() == "equip" and slot == "weapon":

@@ -2,12 +2,13 @@
 
 > Gameplay-first development. Every phase should make the game more fun to play.
 
-## Current release: v0.6 offline vertical slice
+## Current release: v0.7 combat progression
 
-The active finish line is the bounded Warrior quest in
-[`VERTICAL_SLICE_PLAN.md`](./VERTICAL_SLICE_PLAN.md). Multi-currency and MMO
-expansion remain future ideas until this offline loop is manually played and
-released.
+The active finish line is the bounded quest in
+[`VERTICAL_SLICE_PLAN.md`](./VERTICAL_SLICE_PLAN.md), playable with Warrior,
+Mage, or Ranger. Each class now has its own basic-attack reach, combo scaling,
+dodge identity, four skills, and class-compatible quest weapon. Multi-currency
+and MMO expansion remain future ideas.
 
 ---
 

@@ -3,6 +3,8 @@ class_name Player
 ## 3D player controller — WASD ground movement on X/Z, gravity on Y,
 ## mouse-look on the SpringArm3D camera. BDO action-cam style.
 
+const CombatProfiles := preload("res://scripts/combat/combat_profile.gd")
+
 @export var speed: float = 4.5
 @export var mouse_sensitivity: float = 0.005
 
@@ -44,8 +46,17 @@ var _queued_attack: bool = false
 var _combo_index: int = 0
 const COMBO_MAX: int = 3
 
+const MAX_STAMINA := 100.0
+const STAMINA_REGEN_PER_SECOND := 24.0
+var stamina := MAX_STAMINA
+var _dodge_remaining := 0.0
+var _invulnerable_remaining := 0.0
+var _dodge_direction := Vector3.ZERO
+var _combat_profile: Dictionary = {}
+
 func _ready() -> void:
 	if is_local:
+		_combat_profile = CombatProfiles.get_profile(GameManager.player_class)
 		camera.current = true
 		nametag.text = GameManager.player_name
 		speed = float(GameManager.player_stats["speed"]) / 30.0  # 2D px/s → m/s
@@ -92,6 +103,8 @@ func _physics_process(delta: float) -> void:
 	if not is_local:
 		return
 
+	_tick_combat_mobility(delta)
+
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 	else:
@@ -107,8 +120,12 @@ func _physics_process(delta: float) -> void:
 	var move_vec: Vector3 = basis_yaw * Vector3(input_dir.x, 0.0, input_dir.y)
 
 	var move_speed := float(GameManager.get_total_speed()) / 30.0
-	velocity.x = move_vec.x * move_speed
-	velocity.z = move_vec.z * move_speed
+	if _dodge_remaining > 0.0:
+		velocity.x = _dodge_direction.x * float(_combat_profile["dodge_speed"])
+		velocity.z = _dodge_direction.z * float(_combat_profile["dodge_speed"])
+	else:
+		velocity.x = move_vec.x * move_speed
+		velocity.z = move_vec.z * move_speed
 
 	if move_vec.length() > 0.01:
 		facing_direction = move_vec.normalized()
@@ -128,6 +145,8 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("attack"):
 		_on_attack_input()
+	if Input.is_action_just_pressed("dodge"):
+		_start_dodge(move_vec)
 
 	if Input.is_action_just_pressed("interact"):
 		_try_interact()
@@ -182,8 +201,11 @@ func _perform_attack() -> void:
 	if animation_player.has_animation("attack"):
 		animation_player.play("attack")
 
-	var total_attack := GameManager.get_total_attack()
-	for body in attack_area.get_overlapping_bodies():
+	var total_attack := int(
+		GameManager.get_total_attack()
+		* CombatProfiles.combo_multiplier(GameManager.player_class, _combo_index)
+	)
+	for body in _basic_attack_targets():
 		if body.is_in_group("enemies"):
 			var crit_result := CombatSystem.calculate_crit(
 				total_attack, GameManager.get_total_crit_chance(), GameManager.get_total_crit_damage()
@@ -205,8 +227,12 @@ func _try_interact() -> void:
 			return
 
 func take_damage(amount: int, _attacker_id: int) -> void:
+	if _invulnerable_remaining > 0.0:
+		return
 	if randf() < GameManager.get_dodge_chance():
 		return
+	if _dodge_remaining > 0.0:
+		amount = ceili(float(amount) * (1.0 - float(_combat_profile.get("damage_reduction", 0.0))))
 	var total_def := GameManager.get_total_defense()
 	var actual_damage: int = max(1, amount - total_def)
 	GameManager.player_stats["hp"] -= actual_damage
@@ -218,6 +244,50 @@ func take_damage(amount: int, _attacker_id: int) -> void:
 	_flash_damage()
 	if GameManager.player_stats["hp"] <= 0:
 		_die()
+
+func grant_invulnerability(seconds: float) -> void:
+	_invulnerable_remaining = maxf(_invulnerable_remaining, seconds)
+
+func _start_dodge(move_vec: Vector3) -> bool:
+	if _dodge_remaining > 0.0:
+		return false
+	var cost := float(_combat_profile.get("dodge_cost", 35.0))
+	if stamina < cost:
+		return false
+	stamina -= cost
+	_dodge_remaining = float(_combat_profile.get("dodge_duration", 0.25))
+	_invulnerable_remaining = float(_combat_profile.get("invulnerable", 0.15))
+	_dodge_direction = move_vec.normalized() if move_vec.length() > 0.01 else facing_direction
+	EventBus.player_stamina_changed.emit(player_peer_id, stamina, MAX_STAMINA)
+	EventBus.dodge_started.emit(player_peer_id, _dodge_remaining)
+	return true
+
+func _tick_combat_mobility(delta: float) -> void:
+	_dodge_remaining = maxf(0.0, _dodge_remaining - delta)
+	_invulnerable_remaining = maxf(0.0, _invulnerable_remaining - delta)
+	if _dodge_remaining <= 0.0 and stamina < MAX_STAMINA:
+		var previous := stamina
+		stamina = minf(MAX_STAMINA, stamina + STAMINA_REGEN_PER_SECOND * delta)
+		if floori(previous) != floori(stamina):
+			EventBus.player_stamina_changed.emit(player_peer_id, stamina, MAX_STAMINA)
+
+func _basic_attack_targets() -> Array[Node3D]:
+	var candidates: Array[Dictionary] = []
+	var attack_range := float(_combat_profile.get("basic_range", 1.9))
+	var arc_cos := float(_combat_profile.get("basic_arc_cos", -0.2))
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(enemy) or not enemy.visible:
+			continue
+		var offset: Vector3 = enemy.global_position - global_position
+		offset.y = 0.0
+		var distance := offset.length()
+		if distance <= attack_range and distance > 0.001 and facing_direction.dot(offset / distance) >= arc_cos:
+			candidates.append({"enemy": enemy, "distance": distance})
+	candidates.sort_custom(func(a, b): return a["distance"] < b["distance"])
+	var result: Array[Node3D] = []
+	for entry in candidates.slice(0, int(_combat_profile.get("max_targets", 1))):
+		result.append(entry["enemy"])
+	return result
 
 func _flash_damage() -> void:
 	var mat: StandardMaterial3D = mesh.get_active_material(0)

@@ -109,6 +109,8 @@ func use_skill(skill_id: String) -> Array[Node3D]:
 			hit_enemies.append(enemy)
 			hits_landed += 1
 
+	_apply_movement_effect(skill_id)
+
 	skill_used.emit(skill_id)
 	EventBus.skill_activated.emit(skill_id, owner_node.global_position)
 	return hit_enemies
@@ -141,8 +143,23 @@ func _deal_damage_to(enemy: Node3D, base_damage: int, _skill_id: String) -> void
 	var final_damage: int = crit_result["damage"]
 	if enemy.has_method("take_damage"):
 		enemy.take_damage(final_damage, owner_node.get_instance_id())
+	if enemy.has_method("apply_status"):
+		match _skill_id:
+			"fireball", "meteor": enemy.apply_status("burn", 3.0, 0.75)
+			"blizzard": enemy.apply_status("slow", 3.0, 0.45)
+			"lightning_chain", "multishot": enemy.apply_status("marked", 4.0, 0.1)
 	if crit_result["is_crit"]:
 		EventBus.critical_hit.emit(enemy.global_position, final_damage)
+
+func _apply_movement_effect(skill_id: String) -> void:
+	if not is_instance_valid(owner_node):
+		return
+	if skill_id == "shield_charge":
+		owner_node.global_position += owner_node.facing_direction * 1.8
+	elif skill_id == "evasive_shot":
+		owner_node.global_position -= owner_node.facing_direction * 1.4
+		if owner_node.has_method("grant_invulnerability"):
+			owner_node.grant_invulnerability(0.35)
 
 func get_cooldown_percent(skill_id: String) -> float:
 	if not cooldowns.has(skill_id):

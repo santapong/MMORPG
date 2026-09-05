@@ -49,6 +49,8 @@ var original_move_speed: float = 0.0
 var silver_per_kill: int = 0
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
+var is_elite := false
+var status_effects: Dictionary = {}
 
 const MOB_COLORS := {
 	"slime": Color(0.3, 1.0, 0.3),
@@ -117,6 +119,7 @@ func _physics_process(delta: float) -> void:
 
 	attack_cooldown -= delta
 	ability_cooldown_timer -= delta
+	_tick_status_effects(delta)
 
 	# Gravity always.
 	if not is_on_floor():
@@ -229,6 +232,8 @@ func _do_attack() -> void:
 		attack_cooldown = 1.0
 
 func take_damage(amount: int, attacker_id: int) -> void:
+	if status_effects.has("marked"):
+		amount = ceili(float(amount) * 1.1)
 	var actual_damage := CombatSystem.calculate_damage(amount, defense)
 	current_hp -= actual_damage
 	_update_hp_bar()
@@ -239,6 +244,48 @@ func take_damage(amount: int, attacker_id: int) -> void:
 
 	if current_hp <= 0:
 		_die(attacker_id)
+
+func make_elite() -> void:
+	if is_elite:
+		return
+	is_elite = true
+	enemy_name = "Crowned " + enemy_name
+	max_hp = ceili(max_hp * 2.2)
+	current_hp = max_hp
+	attack_power = ceili(attack_power * 1.5)
+	exp_reward *= 3
+	silver_per_kill *= 3
+	respawn_time *= 2.0
+	scale *= 1.3
+	if nametag:
+		nametag.text = enemy_name + " [ELITE]"
+	EventBus.elite_spawned.emit(get_instance_id(), enemy_name)
+
+func apply_status(effect: String, duration: float, strength: float) -> void:
+	status_effects[effect] = {"remaining": duration, "strength": strength, "tick": 0.0}
+
+func _tick_status_effects(delta: float) -> void:
+	var expired: Array[String] = []
+	for effect in status_effects:
+		var state: Dictionary = status_effects[effect]
+		state["remaining"] = float(state["remaining"]) - delta
+		if effect == "slow":
+			velocity.x *= 1.0 - float(state["strength"])
+			velocity.z *= 1.0 - float(state["strength"])
+		elif effect == "burn":
+			state["tick"] = float(state["tick"]) + delta
+			if state["tick"] >= 1.0:
+				state["tick"] = 0.0
+				current_hp -= maxi(1, ceili(float(GameManager.get_total_attack()) * float(state["strength"])))
+				_update_hp_bar()
+				if current_hp <= 0:
+					_die(GameManager.player_id)
+		if float(state["remaining"]) <= 0.0:
+			expired.append(effect)
+		else:
+			status_effects[effect] = state
+	for effect in expired:
+		status_effects.erase(effect)
 
 func _die(killer_id: int) -> void:
 	state = "dead"

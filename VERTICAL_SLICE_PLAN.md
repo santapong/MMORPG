@@ -2,11 +2,11 @@
 
 ## Finish line
 
-A new Warrior can complete a coherent 10-15 minute loop in one session:
+A new Warrior, Mage, or Ranger can complete a coherent 10-15 minute loop in one session:
 
 1. accept **The Slime Crown** from Elder Gorn;
 2. travel from Starter Village to Slime Fields;
-3. defeat five slimes and receive a Wooden Sword, Black Stones, and silver;
+3. defeat five slimes and receive a class weapon, Black Stones, and silver;
 4. equip and enhance the sword;
 5. defeat the Slime King in its marked arena;
 6. return to Elder Gorn, receive the reward, and retain progress after reload.
@@ -37,6 +37,9 @@ A new Warrior can complete a coherent 10-15 minute loop in one session:
 - [x] The Slime King does not respawn after defeat.
 - [x] Returning to Elder Gorn completes the quest and saves the state.
 - [x] Reloading a character preserves quest, inventory, equipment, and enhancement.
+- [x] Warrior, Mage, and Ranger each receive and enhance their matching weapon.
+- [x] Every class has a distinct basic attack, combo curve, and stamina dodge.
+- [x] A Crowned Slime elite and class-linked loot trait deepen the field encounter.
 
 Validated headlessly with Godot 4.7.1 on 2026-09-05. A final hands-on feel pass
 is still recommended before tagging because combat timing and camera feel are

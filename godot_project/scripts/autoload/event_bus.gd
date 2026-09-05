@@ -8,6 +8,7 @@ signal player_respawned(player_id: int)
 signal player_level_up(player_id: int, new_level: int)
 signal player_health_changed(player_id: int, current_hp: int, max_hp: int)
 signal player_mana_changed(player_id: int, current_mp: int, max_mp: int)
+signal player_stamina_changed(player_id: int, current_stamina: float, max_stamina: float)
 signal player_exp_changed(player_id: int, current_exp: int, exp_to_level: int)
 
 # Class events
@@ -18,6 +19,8 @@ signal damage_dealt(attacker_id: int, target_id: int, amount: int)
 signal entity_died(entity_id: int)
 signal mob_defeated(mob_id: String, entity_id: int)
 signal critical_hit(position: Vector3, amount: int)
+signal dodge_started(player_id: int, duration: float)
+signal elite_spawned(entity_id: int, elite_name: String)
 
 # Skill events
 signal skill_activated(skill_id: String, position: Vector3)

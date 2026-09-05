@@ -1,8 +1,8 @@
 # Pixel Grinder
 
 A 3D action RPG prototype built with Godot 4 — **BDO** combat density meets
-**Frieren** painterly aesthetic. The 2D-to-3D conversion is merged, and the
-current playable target is a bounded offline vertical slice.
+**Frieren** painterly aesthetic. The current offline release combines the
+bounded Slime Crown quest with distinct Warrior, Mage, and Ranger combat.
 
 - See **[INSTALL.md](./INSTALL.md)** for installing Godot and running the project.
 - See **[3D_CONVERSION_PLAN.md](./3D_CONVERSION_PLAN.md)** for the 2D→3D migration plan and art direction.
@@ -45,6 +45,7 @@ XDG_DATA_HOME=/tmp/pixel-grinder-smoke-data godot --headless \
 |-----|--------|
 | `W` `A` `S` `D` | Move |
 | `Left Click` | Attack |
+| `Space` | Class dodge / blink |
 | `E` | Interact with NPCs |
 | `I` | Toggle Inventory |
 | `P` | Toggle Enhancement Panel |
@@ -54,6 +55,16 @@ XDG_DATA_HOME=/tmp/pixel-grinder-smoke-data godot --headless \
 | `Enter` | Focus Chat |
 
 The objective card in the upper-right always shows the next slice action.
+
+## Combat progression
+
+- **Warrior:** short-range cleave combo and a guarded combat step.
+- **Mage:** ranged arcane attacks and a fast blink.
+- **Ranger:** the longest basic range and a generous evasive roll.
+- Every class has four skills; fire, ice, lightning, and multishot skills now
+  apply combat effects, while Shield Charge and Evasive Shot move the player.
+- One Crowned Slime elite anchors the field encounter. Class quest rewards are
+  enhancement-ready and carry a defensive, offensive, or mobility trait.
 
 ## Game Overview
 

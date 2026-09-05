@@ -18,6 +18,9 @@ func _run() -> void:
 	var save_manager = get_node("/root/SaveManager")
 	var event_bus = get_node("/root/EventBus")
 	game_manager.reset_state()
+	var requested_class := int(OS.get_environment("PIXEL_TEST_CLASS") if OS.has_environment("PIXEL_TEST_CLASS") else "0")
+	game_manager.select_class(requested_class as ClassData.ClassType)
+	var expected_weapon := CombatProfile.quest_weapon_id(game_manager.player_class)
 	silver_manager.silver = 0
 	save_manager.delete_save(0)
 	save_manager.current_slot = 0
@@ -39,20 +42,20 @@ func _run() -> void:
 	_require(game_manager.slice_state["stage"] == "equip", "five kills did not grant quest loot")
 
 	var inventory: Inventory = world._find_inventory_panel().inventory
-	_require(inventory.count_item("wooden_sword") == 1, "Wooden Sword reward is missing")
+	_require(inventory.count_item(expected_weapon) == 1, "class quest weapon reward is missing")
 	_require(inventory.count_item("enchant_stone") == 3, "Black Stone reward is missing")
 	_require(silver_manager.silver >= 3500, "enhancement silver is missing")
 
 	var weapon_slot := -1
 	for index in inventory.items.size():
-		if inventory.items[index].get("id", "") == "wooden_sword":
+		if inventory.items[index].get("id", "") == expected_weapon:
 			weapon_slot = index
 			break
 	_require(weapon_slot >= 0, "reward weapon has no inventory slot")
 	inventory.use_item(weapon_slot)
 	await get_tree().process_frame
 	_require(game_manager.slice_state["stage"] == "enhance", "equipping did not advance the objective")
-	_require(inventory.count_item("wooden_sword") == 0, "equipped weapon was duplicated")
+	_require(inventory.count_item(expected_weapon) == 0, "equipped weapon was duplicated")
 
 	var equipment_system: EquipmentSystem = world.local_player.get_equipment_system()
 	_require(equipment_system.can_enhance("weapon")["can"], "quest supplies do not satisfy +1 enhancement")

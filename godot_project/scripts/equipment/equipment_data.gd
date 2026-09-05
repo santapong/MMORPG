@@ -55,6 +55,24 @@ const EQUIPMENT := {
 		"description": "A basic training sword.",
 		"class_req": [], # Empty = any class
 	},
+	"training_staff": {
+		"name": "Training Staff",
+		"slot": "weapon",
+		"grade": Grade.COMMON,
+		"level_req": 1,
+		"stats": {"attack": 5, "max_mp": 8, "crit_chance": 0.01},
+		"description": "A responsive staff for an apprentice mage.",
+		"class_req": [ClassData.ClassType.MAGE],
+	},
+	"training_bow": {
+		"name": "Training Bow",
+		"slot": "weapon",
+		"grade": Grade.COMMON,
+		"level_req": 1,
+		"stats": {"attack": 5, "speed": 5.0, "crit_chance": 0.02},
+		"description": "A light bow balanced for a new ranger.",
+		"class_req": [ClassData.ClassType.RANGER],
+	},
 	"iron_sword": {
 		"name": "Iron Sword",
 		"slot": "weapon",
