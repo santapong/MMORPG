@@ -1,5 +1,5 @@
 extends Node3D
-## Main game world (3D) — spawns the local player, enemies, NPCs, and HUD.
+## Main 2.5D voxel-pixel world — spawns the hero, mobs, NPCs, props, and HUD.
 ## Pixel-space zone bounds from ZoneData are scaled by WORLD_SCALE into meters.
 ## World-position UIs (minimap / world map / waypoint / zone indicator) remain
 ## gated; they consume Vector2 pixel coords and project from the player's X/Z.
@@ -34,8 +34,10 @@ var minimap_node: PanelContainer = null
 var world_map_node: CanvasLayer = null
 var waypoint_arrow_node: Control = null
 var vertical_slice_node: PanelContainer = null
+var _pixel_materials: Dictionary = {}
 
 func _ready() -> void:
+	_build_pixel_world()
 	_spawn_local_player()
 	if SPAWN_ENEMIES:
 		_spawn_zone_enemies()
@@ -43,11 +45,105 @@ func _ready() -> void:
 		_spawn_npcs()
 	_setup_grinding_ui()
 	_setup_vertical_slice()
+	_apply_pixel_ui_theme()
 
 	EventBus.player_joined.connect(_on_player_joined)
 	EventBus.player_left.connect(_on_player_left)
 
 	call_deferred("_apply_saved_state")
+
+func _build_pixel_world() -> void:
+	var art := Node3D.new()
+	art.name = "PixelWorldArt"
+	art.add_to_group("pixel_world_art")
+	ground.add_child(art)
+
+	# A chunky village establishes the safe hub at a glance.
+	_pixel_house(art, Vector3(-26.5, 0.0, -16.0), Color("b96555"), Color("633d52"))
+	_pixel_house(art, Vector3(-19.5, 0.0, -15.5), Color("d18b55"), Color("694353"))
+	_pixel_house(art, Vector3(-27.0, 0.0, -5.0), Color("638c72"), Color("3e4f52"))
+	for tree_pos in [
+		Vector3(-31, 0, -18), Vector3(-30, 0, -10), Vector3(-29, 0, -1),
+		Vector3(-16, 0, -18), Vector3(-15, 0, -4), Vector3(-8, 0, -22),
+		Vector3(2, 0, -22), Vector3(8, 0, -17), Vector3(8, 0, -5),
+		Vector3(1, 0, 2), Vector3(-10, 0, 2)
+	]:
+		_pixel_tree(art, tree_pos)
+
+	# Gold crumbs point from the quest giver toward the Slime Fields.
+	for x in range(-22, -11, 2):
+		_cube(art, Vector3(float(x), 0.08, -10.0), Vector3(0.32, 0.12, 0.32), Color("f6c85f"), true)
+
+	# A block gate and banners make the combat zone boundary unmistakable.
+	for side in [-1.0, 1.0]:
+		_cube(art, Vector3(-13.3, 1.2, -10.0 + side * 2.0), Vector3(0.6, 2.4, 0.6), Color("543b3d"))
+		_cube(art, Vector3(-13.0, 1.85, -10.0 + side * 2.0), Vector3(0.18, 0.85, 1.2), Color("79d173"))
+	_cube(art, Vector3(-13.3, 2.45, -10.0), Vector3(0.6, 0.38, 4.6), Color("6f4b3e"))
+
+	# Rocks and bright tufts break up the field using only hard-edged blocks.
+	for rock_pos in [Vector3(-8, 0, -16), Vector3(-3, 0, -5), Vector3(3, 0, -14), Vector3(5, 0, -3)]:
+		_cube(art, rock_pos + Vector3(0, 0.25, 0), Vector3(0.8, 0.5, 0.65), Color("60716d"))
+		_cube(art, rock_pos + Vector3(0.32, 0.48, 0), Vector3(0.38, 0.35, 0.42), Color("82907d"))
+
+	_pixel_zone_label(art, Vector3(-23.0, 3.3, -18.5), "STARTER VILLAGE  •  SAFE HUB", Color("fff1d2"))
+	_pixel_zone_label(art, Vector3(-3.0, 3.5, -21.0), "SLIME FIELDS  •  COMBAT ZONE", Color("9bdd62"))
+
+func _pixel_house(parent: Node3D, at: Vector3, wall_color: Color, roof_color: Color) -> void:
+	_cube(parent, at + Vector3(0, 1.0, 0), Vector3(4.0, 2.0, 3.2), wall_color)
+	_cube(parent, at + Vector3(0, 2.15, 0), Vector3(4.6, 0.45, 3.8), roof_color)
+	_cube(parent, at + Vector3(0, 0.72, 1.63), Vector3(0.85, 1.44, 0.15), Color("2b2334"))
+	_cube(parent, at + Vector3(-1.15, 1.25, 1.64), Vector3(0.55, 0.55, 0.12), Color("7ed6da"), true)
+
+func _pixel_tree(parent: Node3D, at: Vector3) -> void:
+	_cube(parent, at + Vector3(0, 1.0, 0), Vector3(0.65, 2.0, 0.65), Color("694936"))
+	_cube(parent, at + Vector3(0, 2.25, 0), Vector3(2.3, 1.25, 2.0), Color("286049"))
+	_cube(parent, at + Vector3(-0.35, 3.0, 0.1), Vector3(1.45, 0.75, 1.45), Color("347858"))
+
+func _pixel_zone_label(parent: Node3D, at: Vector3, copy: String, color: Color) -> void:
+	var label := Label3D.new()
+	label.position = at
+	label.text = copy
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.fixed_size = true
+	label.font_size = 12
+	label.outline_size = 3
+	label.modulate = color
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	parent.add_child(label)
+
+func _cube(parent: Node3D, at: Vector3, size: Vector3, color: Color, glow := false) -> MeshInstance3D:
+	var cube := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = size
+	box.material = _pixel_material(color, glow)
+	cube.mesh = box
+	cube.position = at
+	parent.add_child(cube)
+	return cube
+
+func _pixel_material(color: Color, glow := false) -> StandardMaterial3D:
+	var key := color.to_html() + ("_glow" if glow else "")
+	if _pixel_materials.has(key):
+		return _pixel_materials[key]
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 1.0
+	if glow:
+		material.emission_enabled = true
+		material.emission = color.darkened(0.2)
+		material.emission_energy_multiplier = 0.8
+	_pixel_materials[key] = material
+	return material
+
+func _apply_pixel_ui_theme() -> void:
+	for child in ui_layer.get_children():
+		_apply_theme_to_branch(child)
+
+func _apply_theme_to_branch(node: Node) -> void:
+	if node is Control:
+		(node as Control).theme = PixelTheme.build()
+	for child in node.get_children():
+		_apply_theme_to_branch(child)
 
 func _process(_delta: float) -> void:
 	# Sync remote player positions (Vector3 in network state).
@@ -252,22 +348,14 @@ func spawn_slice_boss() -> void:
 	if not get_tree().get_nodes_in_group("slice_boss").is_empty():
 		return
 
-	var arena := MeshInstance3D.new()
+	var arena := Node3D.new()
 	arena.name = "SlimeKingArena"
-	var arena_mesh := CylinderMesh.new()
-	arena_mesh.top_radius = 4.5
-	arena_mesh.bottom_radius = 4.5
-	arena_mesh.height = 0.04
-	var arena_material := StandardMaterial3D.new()
-	arena_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	arena_material.albedo_color = Color(0.55, 0.9, 0.2, 0.2)
-	arena_material.emission_enabled = true
-	arena_material.emission = Color(0.3, 0.65, 0.1)
-	arena_material.emission_energy_multiplier = 0.35
-	arena_mesh.material = arena_material
-	arena.mesh = arena_mesh
-	arena.position = _pixel_to_world(Vector2(900, 300)) + Vector3(0, 0.03, 0)
+	arena.position = _pixel_to_world(Vector2(900, 300))
 	ground.add_child(arena)
+	for index in 20:
+		var angle := TAU * float(index) / 20.0
+		var block_pos := Vector3(cos(angle) * 4.5, 0.08, sin(angle) * 4.5)
+		_cube(arena, block_pos, Vector3(1.15, 0.14, 1.15), Color("9bdd62"), true)
 
 	var boss := EnemyScene.instantiate() as Enemy
 	boss.enemy_name = "Slime King"

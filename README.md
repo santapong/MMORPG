@@ -1,8 +1,15 @@
 # Pixel Grinder
 
-A 3D action RPG prototype built with Godot 4 — **BDO** combat density meets
-**Frieren** painterly aesthetic. The current offline release combines the
-bounded Slime Crown quest with distinct Warrior, Mage, and Ranger combat.
+**A 2.5D voxel-pixel action RPG about hunting monsters, collecting gear, and
+making that gear stronger.** The playable Godot 4 demo is one complete arcade
+RPG loop: follow the gold pixel trail, clear the Slime Fields, claim a class
+weapon, enhance it, and defeat the crowned Slime King.
+
+> **Game loop:** HUNT SLIMES → LOOT GEAR → ENHANCE → DEFEAT THE BOSS
+
+The presentation is intentionally pixel-first: block-built heroes, NPCs and
+slimes; a fixed isometric-style action camera; checkerboard terrain; voxel
+village props; a limited dusk palette; and hard-edged UI panels.
 
 - See **[INSTALL.md](./INSTALL.md)** for installing Godot and running the project.
 - See **[3D_CONVERSION_PLAN.md](./3D_CONVERSION_PLAN.md)** for the 2D→3D migration plan and art direction.
@@ -10,7 +17,8 @@ bounded Slime Crown quest with distinct Warrior, Mage, and Ranger combat.
 
 ## Playable slice: The Slime Crown
 
-Create a Warrior, start single-player, and follow the objective card:
+Create a Warrior, Mage, or Ranger, start the offline quest, and follow the
+objective card:
 
 1. Talk to Elder Gorn in Starter Village.
 2. Defeat five slimes in Slime Fields.
@@ -55,6 +63,14 @@ XDG_DATA_HOME=/tmp/pixel-grinder-smoke-data godot --headless \
 | `Enter` | Focus Chat |
 
 The objective card in the upper-right always shows the next slice action.
+
+## What kind of game is it?
+
+- **Genre:** short-form 2.5D pixel action RPG.
+- **Goal:** complete the Slime Crown story quest and beat its boss.
+- **Combat:** real-time attacks, three-hit class combos, four skills, and dodge.
+- **Progression:** monster drops, class weapons, equipment, and enhancement.
+- **Scope:** a complete offline vertical slice, not a live MMO service.
 
 ## Combat progression
 

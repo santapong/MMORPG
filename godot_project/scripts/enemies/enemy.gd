@@ -1,6 +1,6 @@
 extends CharacterBody3D
 class_name Enemy
-## 3D enemy with AI, health, drops, and zone-based stats.
+## Block-built pixel enemy with AI, health, drops, and zone-based stats.
 ## Stored ranges and speeds are in pixel units (legacy ZoneData); they're
 ## scaled by WORLD_SCALE (1/30) into meters at use sites so the existing
 ## tuning data stays untouched.
@@ -20,6 +20,8 @@ const WORLD_SCALE: float = 1.0 / 30.0
 @onready var mesh: MeshInstance3D = $Mesh
 @onready var hp_label: Label3D = $HPLabel
 @onready var nametag: Label3D = $Nametag
+@onready var pixel_cap: MeshInstance3D = $PixelCap
+@onready var pixel_crown: Node3D = $PixelCrown
 
 var current_hp: int
 var target: Node3D = null
@@ -80,6 +82,7 @@ func _ready() -> void:
 	nametag.text = enemy_name
 	_update_hp_bar()
 	_apply_color(MOB_COLORS.get(mob_id, Color(1, 0.3, 0.3)))
+	pixel_crown.visible = mob_id == "slime_king"
 	_setup_ability()
 
 func setup_from_mob_id(id: String, zone_silver: int = 0) -> void:
@@ -259,6 +262,8 @@ func make_elite() -> void:
 	scale *= 1.3
 	if nametag:
 		nametag.text = enemy_name + " [ELITE]"
+	if pixel_crown:
+		pixel_crown.visible = true
 	EventBus.elite_spawned.emit(get_instance_id(), enemy_name)
 
 func apply_status(effect: String, duration: float, strength: float) -> void:
@@ -367,6 +372,12 @@ func _apply_color(color: Color) -> void:
 	mat = mat.duplicate()
 	mat.albedo_color = color
 	mesh.set_surface_override_material(0, mat)
+	if pixel_cap:
+		var cap_mat: StandardMaterial3D = pixel_cap.get_active_material(0)
+		if cap_mat:
+			cap_mat = cap_mat.duplicate()
+			cap_mat.albedo_color = color.lightened(0.16)
+			pixel_cap.set_surface_override_material(0, cap_mat)
 
 func _flash(flash_color: Color, duration: float) -> void:
 	if mesh == null:

@@ -29,11 +29,11 @@ func setup(world_node: Node3D) -> void:
 func _build_ui() -> void:
 	name = "VerticalSlice"
 	set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	offset_left = -390.0
-	offset_right = -24.0
-	offset_top = 24.0
-	offset_bottom = 142.0
-	custom_minimum_size = Vector2(330, 118)
+	offset_left = -338.0
+	offset_right = -18.0
+	offset_top = 18.0
+	offset_bottom = 136.0
+	custom_minimum_size = Vector2(300, 118)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)
@@ -46,7 +46,7 @@ func _build_ui() -> void:
 	content.add_theme_constant_override("separation", 5)
 	margin.add_child(content)
 
-	title_label.text = "THE SLIME CROWN"
+	title_label.text = "MAIN QUEST  //  THE SLIME CROWN"
 	title_label.add_theme_font_size_override("font_size", 15)
 	title_label.add_theme_color_override("font_color", Color(0.75, 0.95, 0.35))
 	content.add_child(title_label)
@@ -70,21 +70,21 @@ func _set_stage(next_stage: String) -> void:
 func _refresh() -> void:
 	match _stage():
 		"offer":
-			objective_label.text = "Talk to Elder Gorn in Starter Village [E]."
-			progress_label.text = "Accept his first hunt."
+			objective_label.text = "STEP 1 — Talk to Elder Gorn in Starter Village [E]."
+			progress_label.text = "Follow the gold pixel trail to the ! marker."
 		"hunt":
 			var defeated := int(GameManager.slice_state.get("slimes_defeated", 0))
-			objective_label.text = "Hunt slimes east of the village."
+			objective_label.text = "STEP 2 — Hunt slimes east of the village."
 			progress_label.text = "%d / %d slimes defeated" % [defeated, SLIME_TARGET]
 		"equip":
 			var weapon := EquipmentData.get_equipment(CombatProfiles.quest_weapon_id(GameManager.player_class))
-			objective_label.text = "Open Inventory [I] and equip the %s." % weapon.get("name", "quest weapon")
+			objective_label.text = "STEP 3 — Open Inventory [I]; equip the %s." % weapon.get("name", "quest weapon")
 			progress_label.text = "Equip your quest loot."
 		"enhance":
-			objective_label.text = "Open Enhancement [P] and improve the weapon."
+			objective_label.text = "STEP 4 — Open Enhancement [P]; improve the weapon."
 			progress_label.text = "Black Stones and silver were supplied."
 		"boss":
-			objective_label.text = "Defeat the Slime King in the glowing field arena."
+			objective_label.text = "FINAL BOSS — Defeat the crowned Slime King."
 			progress_label.text = "The crown awaits east of the village."
 		"return":
 			objective_label.text = "Return to Elder Gorn [E]."

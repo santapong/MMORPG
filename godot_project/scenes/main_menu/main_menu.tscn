@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://mainmenu001"]
+[gd_scene load_steps=3 format=3 uid="uid://mainmenu001"]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="Script" path="res://scripts/ui/pixel_backdrop.gd" id="2_backdrop"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -11,14 +12,25 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.06, 0.12, 1)
+mouse_filter = 2
+script = ExtResource("2_backdrop")
+
+[node name="GenreBadge" type="Label" parent="."]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 278.0
+offset_bottom = 50.0
+theme_override_colors/font_color = Color(0.984, 0.804, 0.404, 1)
+theme_override_font_sizes/font_size = 15
+text = "PIXEL ACTION RPG"
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -36,11 +48,21 @@ custom_minimum_size = Vector2(350, 0)
 layout_mode = 2
 horizontal_alignment = 1
 text = "PIXEL GRINDER"
+theme_override_colors/font_color = Color(1, 0.929, 0.686, 1)
+theme_override_font_sizes/font_size = 42
 
 [node name="SubtitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 horizontal_alignment = 1
-text = "A BDO-Inspired Grinding Game"
+text = "THE SLIME CROWN"
+theme_override_colors/font_color = Color(0.451, 0.839, 0.627, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="LoopLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "HUNT SLIMES  •  LOOT GEAR  •  ENHANCE  •  DEFEAT THE KING"
+theme_override_font_sizes/font_size = 12
 
 [node name="Spacer1" type="Control" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -48,7 +70,7 @@ custom_minimum_size = Vector2(0, 15)
 
 [node name="ClassLabel" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Choose Your Class:"
+text = "CHOOSE YOUR FIGHTER"
 horizontal_alignment = 1
 
 [node name="ClassContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
@@ -80,7 +102,7 @@ custom_minimum_size = Vector2(0, 10)
 
 [node name="IPLabel" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Server IP:"
+text = "Co-op Server IP (optional):"
 
 [node name="IPInput" type="LineEdit" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -92,15 +114,15 @@ custom_minimum_size = Vector2(0, 15)
 
 [node name="SingleplayerButton" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Start Grinding (Singleplayer)"
+text = "PLAY OFFLINE QUEST"
 
 [node name="HostButton" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Host Server"
+text = "Host Co-op Prototype"
 
 [node name="JoinButton" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Join Server"
+text = "Join Co-op Prototype"
 
 [node name="Spacer5" type="Control" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -114,4 +136,4 @@ text = ""
 [node name="ControlsLabel" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 horizontal_alignment = 1
-text = "WASD: Move | Click: Attack | 1-4: Skills | G: Grind Tracker | P: Enhance | I: Inventory"
+text = "WASD MOVE  •  CLICK ATTACK  •  SPACE DODGE  •  E TALK  •  1-4 SKILLS"

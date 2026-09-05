@@ -9,6 +9,7 @@ class_name ChatBox
 var chat_system: ChatSystem
 
 func _ready() -> void:
+	# Chat is secondary in the offline action-RPG slice; keep it compact until used.
 	chat_system = ChatSystem.new()
 	add_child(chat_system)
 	chat_system.message_added.connect(_on_message_added)
@@ -17,6 +18,7 @@ func _ready() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("chat_focus") and not input_field.has_focus():
+		_set_expanded(true)
 		input_field.grab_focus()
 		get_viewport().set_input_as_handled()
 
@@ -33,6 +35,11 @@ func _submit_message() -> void:
 	chat_system.send_message(text)
 	input_field.text = ""
 	input_field.release_focus()
+	_set_expanded(false)
+
+func _set_expanded(expanded: bool) -> void:
+	chat_log.visible = expanded
+	offset_top = -220.0 if expanded else -58.0
 
 func _on_message_added(sender: String, text: String, channel: String) -> void:
 	var color: String

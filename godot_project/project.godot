@@ -5,7 +5,7 @@
 [application]
 
 config/name="Pixel Grinder"
-config/description="3D Action MMORPG — BDO combat with Frieren painterly aesthetic"
+config/description="2.5D voxel-pixel action RPG — hunt slimes, loot gear, enhance, defeat the king"
 run/main_scene="res://scenes/main_menu/main_menu.tscn"
 config/features=PackedStringArray("4.2", "Forward Plus")
 config/icon="res://icon.svg"
@@ -120,3 +120,8 @@ toggle_enhancement={
 
 renderer/rendering_method="forward_plus"
 renderer/rendering_method.mobile="mobile"
+textures/canvas_textures/default_texture_filter=0
+textures/default_filters/use_nearest_mipmap_filter=true
+anti_aliasing/quality/msaa_2d=0
+anti_aliasing/quality/msaa_3d=0
+environment/defaults/default_clear_color=Color(0.094, 0.071, 0.145, 1)

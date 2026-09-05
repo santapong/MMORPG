@@ -12,13 +12,14 @@ func spawn_number(pos: Vector3, text: String, color: Color, scale_val: float = 1
 	label.text = text
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.fixed_size = true
-	label.font_size = int(28 * scale_val)
-	label.outline_size = 6
+	label.font_size = int(18 * scale_val)
+	label.outline_size = 4
 	label.modulate = color
 	label.no_depth_test = true
 	var jitter := Vector3(randf_range(-0.2, 0.2), 1.4, randf_range(-0.2, 0.2))
-	label.global_position = pos + jitter
 	add_child(label)
+	# Global transforms are valid only after the label enters the scene tree.
+	label.global_position = pos + jitter
 
 	var tween := create_tween()
 	tween.set_parallel(true)

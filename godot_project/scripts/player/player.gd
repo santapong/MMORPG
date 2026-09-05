@@ -1,7 +1,6 @@
 extends CharacterBody3D
 class_name Player
-## 3D player controller — WASD ground movement on X/Z, gravity on Y,
-## mouse-look on the SpringArm3D camera. BDO action-cam style.
+## 2.5D voxel-pixel player controller — camera-relative action RPG movement.
 
 const CombatProfiles := preload("res://scripts/combat/combat_profile.gd")
 
@@ -16,6 +15,12 @@ const CombatProfiles := preload("res://scripts/combat/combat_profile.gd")
 @onready var collision: CollisionShape3D = $CollisionShape3D
 @onready var attack_area: Area3D = $AttackArea
 @onready var nametag: Label3D = $Nametag
+@onready var pixel_head: MeshInstance3D = $PixelHead
+@onready var pixel_arm_left: MeshInstance3D = $PixelArmLeft
+@onready var pixel_arm_right: MeshInstance3D = $PixelArmRight
+@onready var pixel_leg_left: MeshInstance3D = $PixelLegLeft
+@onready var pixel_leg_right: MeshInstance3D = $PixelLegRight
+@onready var class_weapons: Node3D = $ClassWeapons
 
 var is_local: bool = false
 var player_peer_id: int = -1
@@ -53,14 +58,18 @@ var _dodge_remaining := 0.0
 var _invulnerable_remaining := 0.0
 var _dodge_direction := Vector3.ZERO
 var _combat_profile: Dictionary = {}
+var _walk_phase := 0.0
 
 func _ready() -> void:
 	if is_local:
 		_combat_profile = CombatProfiles.get_profile(GameManager.player_class)
 		camera.current = true
 		nametag.text = GameManager.player_name
+		nametag.visible = false
 		speed = float(GameManager.player_stats["speed"]) / 30.0  # 2D px/s → m/s
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		# The camera is deliberately locked to the isometric angle. A visible cursor
+		# makes click-to-attack readable and prevents accidental camera drift.
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 		skill_system = SkillSystem.new()
 		add_child(skill_system)
@@ -69,15 +78,22 @@ func _ready() -> void:
 		equipment = EquipmentSystem.new()
 		add_child(equipment)
 
-		var class_info := ClassData.get_class_info(GameManager.player_class)
-		var class_color: Color = class_info.get("color", Color.WHITE)
-		var mat: StandardMaterial3D = mesh.get_active_material(0)
+		_apply_pixel_class(GameManager.player_class)
+	else:
+		camera.current = false
+
+func _apply_pixel_class(class_type: ClassData.ClassType) -> void:
+	var class_info := ClassData.get_class_info(class_type)
+	var class_color: Color = class_info.get("color", Color.WHITE)
+	for part in [mesh, pixel_arm_left, pixel_arm_right]:
+		var mat: StandardMaterial3D = part.get_active_material(0)
 		if mat:
 			mat = mat.duplicate()
 			mat.albedo_color = class_color
-			mesh.set_surface_override_material(0, mat)
-	else:
-		camera.current = false
+			part.set_surface_override_material(0, mat)
+	var weapon_name := ClassData.get_class_name_str(class_type)
+	for weapon in class_weapons.get_children():
+		weapon.visible = weapon.name == weapon_name
 
 func get_skill_system() -> SkillSystem:
 	return skill_system
@@ -88,16 +104,8 @@ func get_equipment_system() -> EquipmentSystem:
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_local:
 		return
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		camera_pivot.rotate_y(-event.relative.x * mouse_sensitivity)
-		spring_arm.rotate_x(-event.relative.y * mouse_sensitivity)
-		spring_arm.rotation.x = clamp(spring_arm.rotation.x, deg_to_rad(-70), deg_to_rad(20))
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		Input.mouse_mode = (
-			Input.MOUSE_MODE_VISIBLE
-			if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-			else Input.MOUSE_MODE_CAPTURED
-		)
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _physics_process(delta: float) -> void:
 	if not is_local:
@@ -135,6 +143,7 @@ func _physics_process(delta: float) -> void:
 		_update_animation("walk")
 	else:
 		_update_animation("idle")
+	_animate_pixel_walk(move_vec.length() > 0.01, delta)
 
 	move_and_slide()
 
@@ -160,6 +169,22 @@ func _update_animation(action: String) -> void:
 	# Placeholder — animation graph lands in step 10 with the GLTF rig.
 	if animation_player.has_animation(action):
 		animation_player.play(action)
+
+func _animate_pixel_walk(is_moving: bool, delta: float) -> void:
+	if is_moving:
+		_walk_phase += delta * 11.0
+		var swing := sin(_walk_phase) * 0.38
+		pixel_arm_left.rotation.x = swing
+		pixel_arm_right.rotation.x = -swing
+		pixel_leg_left.rotation.x = -swing * 0.65
+		pixel_leg_right.rotation.x = swing * 0.65
+		pixel_head.position.y = 1.84 + absf(sin(_walk_phase * 2.0)) * 0.035
+	else:
+		pixel_arm_left.rotation.x = lerpf(pixel_arm_left.rotation.x, 0.0, delta * 12.0)
+		pixel_arm_right.rotation.x = lerpf(pixel_arm_right.rotation.x, 0.0, delta * 12.0)
+		pixel_leg_left.rotation.x = lerpf(pixel_leg_left.rotation.x, 0.0, delta * 12.0)
+		pixel_leg_right.rotation.x = lerpf(pixel_leg_right.rotation.x, 0.0, delta * 12.0)
+		pixel_head.position.y = lerpf(pixel_head.position.y, 1.84, delta * 12.0)
 
 func _on_attack_input() -> void:
 	## Public entry point for the attack action — gated by the chunk machine.
@@ -200,6 +225,12 @@ func _perform_attack() -> void:
 	#   anim_tree.travel("attack_chunk_%d" % _combo_index)
 	if animation_player.has_animation("attack"):
 		animation_player.play("attack")
+	var active_weapon: Node3D = class_weapons.get_child(GameManager.player_class)
+	if active_weapon:
+		active_weapon.rotation.z = -0.7
+		var swing_tween := create_tween()
+		swing_tween.tween_property(active_weapon, "rotation:z", 0.35, 0.1)
+		swing_tween.tween_property(active_weapon, "rotation:z", 0.0, 0.12)
 
 	var total_attack := int(
 		GameManager.get_total_attack()
@@ -303,7 +334,8 @@ func _die() -> void:
 	EventBus.player_died.emit(player_peer_id)
 	visible = false
 	set_physics_process(false)
-	EventBus.player_respawned.connect(_on_respawned, CONNECT_ONE_SHOT)
+	if not EventBus.player_respawned.is_connected(_on_respawned):
+		EventBus.player_respawned.connect(_on_respawned, CONNECT_ONE_SHOT)
 
 func _on_respawned(_player_id: int) -> void:
 	global_position = Vector3(0, 1, 0)

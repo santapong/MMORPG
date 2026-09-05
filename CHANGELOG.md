@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0 - Voxel-Pixel Identity Pass
+
+- Reframed Pixel Grinder as a clear 2.5D voxel-pixel action RPG.
+- Rebuilt heroes, remote players, NPCs, slimes, minions, and the boss crown from
+  hard-edged block geometry.
+- Added an isometric-style orthographic combat camera, tiled pixel ground,
+  voxel village houses, trees, rocks, quest trail, zone gate, and boss ring.
+- Reworked the title, character screens, HUD, panels, controls, and objective
+  language around the hunt → loot → enhance → boss loop.
+- Added a shared sharp-corner pixel UI theme and responsive pixel-art menu scene.
+
 ## v0.7.0 - Combat Progression
 
 - Added distinct Warrior, Mage, and Ranger basic attacks, combo scaling, and

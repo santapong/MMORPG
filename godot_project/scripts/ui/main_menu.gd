@@ -24,6 +24,7 @@ var selected_slot: int = -1
 var current_screen: String = "char_select"
 
 func _ready() -> void:
+	PixelTheme.apply(self)
 	host_button.pressed.connect(_on_host_pressed)
 	join_button.pressed.connect(_on_join_pressed)
 	singleplayer_button.pressed.connect(_on_singleplayer_pressed)
@@ -41,15 +42,15 @@ func _ready() -> void:
 func _build_character_select() -> void:
 	char_select_panel = PanelContainer.new()
 	char_select_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	char_select_panel.custom_minimum_size = Vector2(500, 420)
+	char_select_panel.custom_minimum_size = Vector2(560, 448)
 	char_select_panel.anchor_left = 0.5
 	char_select_panel.anchor_right = 0.5
 	char_select_panel.anchor_top = 0.5
 	char_select_panel.anchor_bottom = 0.5
-	char_select_panel.offset_left = -250
-	char_select_panel.offset_right = 250
-	char_select_panel.offset_top = -210
-	char_select_panel.offset_bottom = 210
+	char_select_panel.offset_left = -280
+	char_select_panel.offset_right = 280
+	char_select_panel.offset_top = -224
+	char_select_panel.offset_bottom = 224
 	add_child(char_select_panel)
 
 	var vbox := VBoxContainer.new()
@@ -59,15 +60,23 @@ func _build_character_select() -> void:
 	var title := Label.new()
 	title.text = "PIXEL GRINDER"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	vbox.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Select Your Character"
+	subtitle.text = "2.5D VOXEL-PIXEL ACTION RPG"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.add_theme_font_size_override("font_size", 13)
-	subtitle.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	subtitle.add_theme_font_size_override("font_size", 14)
+	subtitle.add_theme_color_override("font_color", PixelTheme.MINT)
 	vbox.add_child(subtitle)
+
+	var loop := Label.new()
+	loop.text = "HUNT SLIMES  >  LOOT GEAR  >  ENHANCE  >  BOSS"
+	loop.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	loop.add_theme_font_size_override("font_size", 11)
+	loop.add_theme_color_override("font_color", PixelTheme.CREAM)
+	vbox.add_child(loop)
 
 	vbox.add_child(HSeparator.new())
 
@@ -78,7 +87,7 @@ func _build_character_select() -> void:
 		vbox.add_child(hbox)
 
 		var slot_btn := Button.new()
-		slot_btn.custom_minimum_size = Vector2(380, 50)
+		slot_btn.custom_minimum_size = Vector2(420, 48)
 		slot_btn.add_theme_font_size_override("font_size", 12)
 		var idx := i
 		slot_btn.pressed.connect(_on_slot_pressed.bind(idx))
@@ -98,10 +107,10 @@ func _build_character_select() -> void:
 	vbox.add_child(HSeparator.new())
 
 	var controls := Label.new()
-	controls.text = "WASD: Move | Click: Attack | 1-4: Skills | G: Grind | P: Enhance | I: Inventory"
+	controls.text = "WASD MOVE  •  CLICK ATTACK  •  SPACE DODGE  •  E TALK  •  1-4 SKILLS"
 	controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	controls.add_theme_font_size_override("font_size", 9)
-	controls.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+	controls.add_theme_color_override("font_color", PixelTheme.MUTED)
 	vbox.add_child(controls)
 
 	_refresh_slot_buttons()
@@ -126,9 +135,10 @@ func _build_create_character() -> void:
 	create_char_panel.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "Create New Character"
+	title.text = "CREATE YOUR PIXEL HERO"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	vbox.add_child(title)
 
 	vbox.add_child(HSeparator.new())

@@ -1,10 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://mini_enemy001"]
+[gd_scene load_steps=6 format=3 uid="uid://mini_enemy001"]
 
 [ext_resource type="Script" path="res://scripts/enemies/mini_enemy.gd" id="1_mini"]
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
-radius = 0.25
-height = 0.8
+[sub_resource type="BoxMesh" id="BoxMesh_pixel"]
+size = Vector3(1, 1, 1)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.25
@@ -16,9 +15,10 @@ roughness = 0.95
 transparency = 1
 diffuse_mode = 3
 specular_mode = 1
-rim_enabled = true
-rim = 0.4
-rim_tint = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Material_ink"]
+albedo_color = Color(0.05, 0.05, 0.08, 1)
+roughness = 1.0
 
 [node name="MiniEnemy" type="CharacterBody3D" groups=["enemies"]]
 collision_layer = 2
@@ -26,9 +26,22 @@ collision_mask = 9
 script = ExtResource("1_mini")
 
 [node name="Mesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
-mesh = SubResource("CapsuleMesh_body")
+position = Vector3(0, 0.36, 0)
+scale = Vector3(0.58, 0.46, 0.52)
+mesh = SubResource("BoxMesh_pixel")
 surface_material_override/0 = SubResource("StandardMaterial3D_mini")
+
+[node name="PixelEyeLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.13, 0.38, 0.275)
+scale = Vector3(0.08, 0.1, 0.04)
+mesh = SubResource("BoxMesh_pixel")
+surface_material_override/0 = SubResource("Material_ink")
+
+[node name="PixelEyeRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.13, 0.38, 0.275)
+scale = Vector3(0.08, 0.1, 0.04)
+mesh = SubResource("BoxMesh_pixel")
+surface_material_override/0 = SubResource("Material_ink")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)

@@ -10,6 +10,7 @@ class_name NPC
 @onready var mesh: MeshInstance3D = $Mesh
 @onready var nametag: Label3D = $Nametag
 @onready var interact_hint: Label3D = $InteractHint
+@onready var quest_marker: Label3D = $QuestMarker
 
 var current_dialog_index: int = 0
 var player_nearby: bool = false
@@ -18,6 +19,23 @@ func _ready() -> void:
 	add_to_group("npcs")
 	nametag.text = npc_name
 	interact_hint.visible = false
+	quest_marker.visible = npc_name == "Elder Gorn"
+	_apply_pixel_role_color()
+
+func _apply_pixel_role_color() -> void:
+	var role_color := Color("66a5df")
+	if npc_name == "Elder Gorn":
+		role_color = Color("a77bdb")
+	elif npc_name == "Merchant Lyra":
+		role_color = Color("e6a94f")
+	elif npc_name == "Grind Guide Rex":
+		role_color = Color("4fbf91")
+	for part in [$Mesh, $PixelArmLeft, $PixelArmRight]:
+		var mat: StandardMaterial3D = part.get_active_material(0)
+		if mat:
+			mat = mat.duplicate()
+			mat.albedo_color = role_color
+			part.set_surface_override_material(0, mat)
 
 func interact() -> void:
 	EventBus.npc_interacted.emit(npc_name)

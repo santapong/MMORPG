@@ -1,6 +1,6 @@
 extends CanvasLayer
 class_name HUD
-## Main game HUD — health, mana, exp, level, silver, and class display. BDO-style.
+## Hard-edged pixel HUD — identity, combat loop, vitals, level, and silver.
 
 @onready var hp_bar: ProgressBar = $MarginContainer/VBoxContainer/HPBar
 @onready var mp_bar: ProgressBar = $MarginContainer/VBoxContainer/MPBar
@@ -13,6 +13,13 @@ class_name HUD
 @onready var stamina_bar: ProgressBar = $MarginContainer/VBoxContainer/StaminaBar
 
 func _ready() -> void:
+	PixelTheme.apply($MarginContainer)
+	PixelTheme.apply($GameIdentity)
+	PixelTheme.apply($CombatHelp)
+	hp_bar.add_theme_stylebox_override("fill", _bar_fill(PixelTheme.RED))
+	mp_bar.add_theme_stylebox_override("fill", _bar_fill(PixelTheme.BLUE))
+	stamina_bar.add_theme_stylebox_override("fill", _bar_fill(PixelTheme.GOLD))
+	exp_bar.add_theme_stylebox_override("fill", _bar_fill(PixelTheme.MINT))
 	EventBus.player_health_changed.connect(_on_health_changed)
 	EventBus.player_mana_changed.connect(_on_mana_changed)
 	EventBus.player_exp_changed.connect(_on_exp_changed)
@@ -30,7 +37,18 @@ func _refresh() -> void:
 	_update_silver(SilverManager.silver)
 
 	var class_name_str := ClassData.get_class_name_str(GameManager.player_class)
-	class_label.text = class_name_str
+	class_label.text = class_name_str.to_upper() + "  •  PIXEL HERO"
+	class_label.add_theme_color_override(
+		"font_color", ClassData.get_class_info(GameManager.player_class).get("color", Color.WHITE).lightened(0.2)
+	)
+
+func _bar_fill(color: Color) -> StyleBoxFlat:
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = color
+	fill.border_color = color.lightened(0.28)
+	fill.set_border_width_all(2)
+	fill.set_corner_radius_all(0)
+	return fill
 
 func _update_hp(current: int, max_val: int) -> void:
 	hp_bar.max_value = max_val
